@@ -1,0 +1,109 @@
+using Microsoft.AspNetCore.Diagnostics;
+using TransactionService.Application.Commands;
+using TransactionService.Application.Queries;
+using TransactionService.Infrastructure.DI;
+using TransactionService.Presentation.Dtos.Request;
+using TransactionService.Presentation.Dtos.Response;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddLogging();
+
+var factory = builder.Services
+    .AddRabbitMq();
+
+builder.Services
+    .AddMongoDb()
+    .AddEventStore();
+
+var connection = await factory.CreateConnectionAsync();
+var channel = await connection.CreateChannelAsync();
+
+// Register the initialized connection/channel into DI
+builder.Services.AddSingleton(connection);
+builder.Services.AddSingleton(channel);
+
+builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
+
+builder.Services.AddScoped<IQueryHandler<DailyTransactionRequest, DailyTransactionResponse>, DailyTransactionQueryHandler>();
+
+builder.Services.AddExceptionHandler(options =>
+{
+    options.AllowStatusCode404Response = false;
+
+    options.ExceptionHandler = async context =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+                                            .CreateLogger("GlobalExceptionHandler");
+
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        if (exception is BadHttpRequestException badHttpRequest)
+        {
+            // handle bad HTTP request
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new
+            {
+                Message = $"Bad request: {badHttpRequest?.InnerException?.Message ?? badHttpRequest?.Message}"
+            });
+            return;
+        }
+
+        logger.LogError(exception, "An unhandled exception occurred.");
+
+        //if (exception.Stat)
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var errorResponse = new
+        {
+            Message = "An unexpected error occurred. Please try again later."
+        };
+
+        await context.Response.WriteAsJsonAsync(errorResponse);
+    };
+});
+
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseExceptionHandler();
+
+app.MapPost("/transactions", async (
+    CreateTransactionCommand command,
+    ICommandHandler<CreateTransactionCommand, Guid> handler,
+    CancellationToken cancellationToken) =>
+{
+    return await handler.HandleAsync(command, cancellationToken);
+})
+.WithName("CreateTransaction")
+.WithDescription("Creates a new transaction and emits an event")
+.WithSummary("Create transaction");
+
+app.MapPost("/account/transactions/query", async (
+        DailyTransactionRequest request,
+        IQueryHandler<DailyTransactionRequest, DailyTransactionResponse> handler,
+        CancellationToken cancellationToken) =>
+{
+    var result = await handler.HandleAsync(request, cancellationToken);
+
+    return Results.Ok(result);
+})
+.WithName("GetTransactions")
+.WithDescription("")
+.WithSummary("Get transactions by account and date");
+
+await app.RunAsync();
