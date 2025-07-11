@@ -1,12 +1,13 @@
 ﻿using System.Text.Json;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.Messaging.Channel;
+using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
+using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
-using static EventStore.Client.StreamMessage;
 
 namespace BalanceService.Application.Commands
 {
@@ -14,12 +15,14 @@ namespace BalanceService.Application.Commands
     {
         private readonly EventStoreClient _eventStore;
         private readonly ICreatedBalancePublisherChannel _publisherChannel;
+        private readonly IMongoCollection<BalanceProjection> _balances;
         private readonly ILogger<CreateBalanceCommandHandler> _logger;
 
-        public CreateBalanceCommandHandler(EventStoreClient eventStore, ICreatedBalancePublisherChannel publisherChannel, ILogger<CreateBalanceCommandHandler> logger)
+        public CreateBalanceCommandHandler(EventStoreClient eventStore, ICreatedBalancePublisherChannel publisherChannel, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
         {
             _publisherChannel = publisherChannel;
             _logger = logger;
+            _balances = balances;
             _eventStore = eventStore;
         }
 
@@ -30,29 +33,80 @@ namespace BalanceService.Application.Commands
                 Persistent = true
             };
 
-            var id = DeterministicId.For(command.AccountId, command.CreatedAt);
+            var @event = (BalanceCreatedEvent)command;
+
+            var date = command.Date;
+
+            var id = DeterministicId.For(command.AccountId, date);
 
             var eventId = Uuid.FromGuid(id);
 
             var channel = _publisherChannel.Channel;
 
-            var consolidationId = id.ToString();
+            var balanceId = id.ToString();
 
             try
             {
-                var @event = (BalanceCreatedEvent)command;
+                _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Amount: {Amount}",
+                                    command.AccountId, command.Amount);
 
-                await InsertEventAsync(@event, consolidationId, eventId, cancellationToken);
+                await InsertEventAsync(@event, balanceId, eventId, cancellationToken);
+
+                var filter = Builders<BalanceProjection>.Filter.And(
+                    Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
+                    Builders<BalanceProjection>.Filter.Not(
+                        Builders<BalanceProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, balanceId))
+                );
+
+                var update = Builders<BalanceProjection>.Update
+                     .SetOnInsert(c => c.AccountId, command.AccountId)
+                     .Inc(c => c.Amount, @event.Amount)
+                     .Push(c => c.AppliedTransactionIds, balanceId);
+
+                var options = new UpdateOptions { IsUpsert = true };
+                var upsertResult = await _balances.UpdateOneAsync(filter, update, options, cancellationToken);
+
+                var body = JsonSerializer.SerializeToUtf8Bytes(@event);
+
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: "balance.created",
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: body,
+                    cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Published BalanceCreatedEvent to RabbitMQ");
+
+                return upsertResult.ModifiedCount;
             }
             catch(Exception e)
             {
+                _logger.LogError(e, "Error handling CreateBalanceCommand for AccountId: {AccountId}", command.AccountId);
 
+                // Send failed command to DLQ
+                var dlqBody = JsonSerializer.SerializeToUtf8Bytes(new
+                {
+                    FailedAt = DateTime.UtcNow,
+                    Command = command,
+                    Reason = e.Message,
+                    ConsolidationId = balanceId
+                });
+
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: "consolidation.dlq",
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: dlqBody);
+
+                return 0;
             }
         }
 
-        private async Task InsertEventAsync(BalanceCreatedEvent @event, string consolidationId, Uuid eventId, CancellationToken cancellationToken)
+        private async Task InsertEventAsync(BalanceCreatedEvent @event, string balanceId, Uuid eventId, CancellationToken cancellationToken)
         {
-            var streamName = $"balance-{consolidationId}";
+            var streamName = $"balance-{balanceId}";
             var expectedVersion = StreamState.Any;
 
             var eventData = new EventData(

@@ -1,6 +1,7 @@
 ﻿using System.Reactive.Linq;
 using System.Text;
 using System.Text.Json;
+using BalanceService.Application.Commands;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.Messaging.Channel;
 using RabbitMQ.Client;
@@ -10,13 +11,14 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 {
     public sealed class CreatedConsolidationConsumer : BackgroundService
     {
-
         private readonly ICreatedConsolidationConsumerChannel _consumerChannel;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<CreatedConsolidationConsumer> _logger;
 
-        public CreatedConsolidationConsumer(ICreatedConsolidationConsumerChannel consumerChannel, ILogger<CreatedConsolidationConsumer> logger)
+        public CreatedConsolidationConsumer(ICreatedConsolidationConsumerChannel consumerChannel, IServiceProvider serviceProvider, ILogger<CreatedConsolidationConsumer> logger)
         {
             _consumerChannel = consumerChannel;
+            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 
@@ -49,9 +51,9 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 
                 if (stoppingToken.IsCancellationRequested) return;
 
-                //var commandHandler = await GetCommandHandler();
+                var commandHandler = await GetCommandHandler();
 
-                //await commandHandler.HandleAsync((CreateConsolidationCommand)evt, stoppingToken);
+                await commandHandler.HandleAsync((CreateBalanceCommand)evt, stoppingToken);
 
                 await channel.BasicAckAsync(deliveryTag, false);
             },
@@ -66,6 +68,13 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
         {
             _consumerChannel?.Channel?.DisposeAsync();
             await base.StopAsync(cancellationToken);
+        }
+
+        private async Task<ICommandHandler<CreateBalanceCommand, long>> GetCommandHandler()
+        {
+            await using var scope = _serviceProvider.CreateAsyncScope();
+            return scope.ServiceProvider
+                .GetRequiredService<ICommandHandler<CreateBalanceCommand, long>>();
         }
     }
 }

@@ -9,10 +9,13 @@ namespace BalanceService.Application.Commands
         
         public decimal Amount { get; }
         
-        public CreateBalanceCommand(string accountId, decimal amount)
+        public DateTime Date { get; }
+
+        public CreateBalanceCommand(string accountId, decimal amount, DateTime date)
         {
             AccountId = accountId;
             Amount = amount;
+            Date = date;
         }
 
         public static explicit operator CreateBalanceCommand(ConsolidationCreatedEvent @event)
@@ -21,7 +24,8 @@ namespace BalanceService.Application.Commands
 
             return new CreateBalanceCommand(
                 @event.AccountId.ToString(),
-                balanceAmount.Amount
+                balanceAmount.Amount,
+                @event.Date
             );
         }
 

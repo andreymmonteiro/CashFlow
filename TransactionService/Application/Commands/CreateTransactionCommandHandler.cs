@@ -80,11 +80,18 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
             // Idempotent projection write
             var projection = new TransactionProjection(@event.TransactionId.ToString(), accountId, command.Amount, @event.CreatedAt);
 
+            var filter = Builders<TransactionProjection>.Filter.And(
+                Builders<TransactionProjection>.Filter.Eq(c => c.AccountId, command.AccountId.ToString()),
+                Builders<TransactionProjection>.Filter.Eq(c => c.TransactionId, @event.TransactionId.ToString()),
+                Builders<TransactionProjection>.Filter.Not(
+                    Builders<TransactionProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, streamTransactionId)));
+
+
             var replaceResult = await _transaction.ReplaceOneAsync(
-                filter: x => x.TransactionId == projection.TransactionId,
-                replacement: projection,
-                options: new ReplaceOptions { IsUpsert = true },
-                cancellationToken);
+                    filter: filter,
+                    replacement: projection,
+                    options: new ReplaceOptions { IsUpsert = true },
+                    cancellationToken);
 
             _logger.LogInformation("MongoDB upsert result: {Result}", replaceResult);
 

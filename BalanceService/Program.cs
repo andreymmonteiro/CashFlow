@@ -1,9 +1,72 @@
+using BalanceService.Application.Commands;
+using BalanceService.Application.Queries;
+using BalanceService.Infrastructure.DI;
+using BalanceService.Infrastructure.Messaging.Channel;
+using BalanceService.Infrastructure.Messaging.Consumers;
+using BalanceService.Presentation.Dtos.Request;
+using BalanceService.Presentation.Dtos.Response;
+using Microsoft.AspNetCore.Diagnostics;
+using RabbitMQ.Client;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddLogging();
+
+var factory = builder.Services
+    .AddRabbitMq();
+
+builder.Services
+    .AddMongoDb()
+    .AddEventStore();
+
+await RegisterChannels(factory);
+
+builder.Services.AddHostedService<CreatedConsolidationConsumer>();
+
+builder.Services.AddScoped<ICommandHandler<CreateBalanceCommand, long>, CreateBalanceCommandHandler>();
+
+builder.Services.AddScoped<IQueryHandler<BalanceRequest, BalanceResponse>, BalanceQueryHandler>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddExceptionHandler(options =>
+{
+    options.AllowStatusCode404Response = false;
+
+    options.ExceptionHandler = async context =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+                                            .CreateLogger("GlobalExceptionHandler");
+
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        if (exception is BadHttpRequestException badHttpRequest)
+        {
+            // handle bad HTTP request
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new
+            {
+                Message = $"Bad request: {badHttpRequest?.InnerException?.Message ?? badHttpRequest?.Message}"
+            });
+            return;
+        }
+
+        logger.LogError(exception, "An unhandled exception occurred.");
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var errorResponse = new
+        {
+            Message = "An unexpected error occurred. Please try again later."
+        };
+
+        await context.Response.WriteAsJsonAsync(errorResponse);
+    };
+});
 
 var app = builder.Build();
 
@@ -16,4 +79,38 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.Run();
+app.MapGet("/balance", async (Guid accountId, IQueryHandler<BalanceRequest, BalanceResponse> handler, CancellationToken cancellationToken) =>
+{
+    var request = new BalanceRequest(accountId.ToString());
+    var result = await handler.HandleAsync(request, cancellationToken);
+
+    return Results.Ok(result);
+})
+.WithName("GetBalance")
+.WithDescription("")
+.WithSummary("Get balance by accountId");
+
+await app.RunAsync();
+
+async Task RegisterChannels(ConnectionFactory factory)
+{
+    var connection = await factory.CreateConnectionAsync();
+
+    var createdTransactionConsumerChannel = new CreatedBalancePublisherChannel(connection);
+
+    await createdTransactionConsumerChannel.InitializeChannelAsync();
+
+    builder.Services.AddSingleton<ICreatedBalancePublisherChannel>(createdTransactionConsumerChannel);
+
+    var createdConsolidationPublisherChannel = new CreatedConsolidationConsumerChannel(connection);
+
+    await createdConsolidationPublisherChannel.InitializeChannelAsync();
+
+    builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel>(createdConsolidationPublisherChannel);
+
+    var rabbitMqQueueInitializerChannel = new RabbitMqQueueInitializerChannel(connection);
+
+    await rabbitMqQueueInitializerChannel.InitializeChannelAsync();
+
+    builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel>(rabbitMqQueueInitializerChannel);
+}

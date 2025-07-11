@@ -1,13 +1,7 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace TransactionService.Infrastructure.Projections
+﻿namespace TransactionService.Infrastructure.Projections
 {
     public record TransactionProjection
     {
-        [BsonElement("_id")]
-        public ObjectId Id { get; set; }
-
         public string TransactionId { get; set; }
         
         public string AccountId { get; set; }
@@ -15,6 +9,8 @@ namespace TransactionService.Infrastructure.Projections
         public decimal Amount { get; set; }
         
         public DateTime CreatedAt { get; set; }
+
+        public IList<string> AppliedTransactionIds { get; set; } = new List<string>();
 
         public TransactionProjection(string transactionId, string accountId, decimal amount, DateTime createdAt)
         {

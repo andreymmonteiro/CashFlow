@@ -49,9 +49,7 @@ namespace ConsolicationService.Application.Commands
             try
             {
                 _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
-                    command.AccountId, command.Amount, command.CreatedAt);
-
-                
+                    command.AccountId, command.Amount, command.CreatedAt);                
 
                 await InsertEventAsync(@event, consolidationId, eventId, cancellationToken);
 
