@@ -34,7 +34,11 @@ namespace ConsolicationService.Application.Commands
                 Persistent = true
             };
 
-            var id = DeterministicId.For(command.AccountId, command.CreatedAt);
+            var @event = (ConsolidationCreatedEvent)command;
+
+            var accountId = command.AccountId;
+
+            var id = DeterministicId.For(accountId, @event.Date);
 
             var eventId = Uuid.FromGuid(id);
 
@@ -47,7 +51,7 @@ namespace ConsolicationService.Application.Commands
                 _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
                     command.AccountId, command.Amount, command.CreatedAt);
 
-                var @event = (ConsolidationCreatedEvent)command;
+                
 
                 await InsertEventAsync(@event, consolidationId, eventId, cancellationToken);
 

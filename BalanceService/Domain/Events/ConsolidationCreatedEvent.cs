@@ -1,6 +1,3 @@
-﻿namespace BalanceService.Domain.Events
-{
-    public class ConsolidationCreatedEvent
-    {
-    }
-}
+﻿namespace BalanceService.Domain.Events;
+
+public record ConsolidationCreatedEvent(Guid AccountId, decimal Credit, decimal Debit, DateTime Date);

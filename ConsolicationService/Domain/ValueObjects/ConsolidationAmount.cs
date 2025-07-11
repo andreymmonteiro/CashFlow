@@ -1,6 +1,6 @@
 ﻿namespace ConsolicationService.Domain.ValueObjects
 {
-    public readonly struct ConsolidationAmount
+    public record struct ConsolidationAmount
     {
         private readonly decimal _debit;
         private readonly decimal _credit;

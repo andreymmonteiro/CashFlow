@@ -6,6 +6,7 @@ using Polly;
 using RabbitMQ.Client;
 using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.Projections;
+using TransactionService.Infrastructure.Utilities;
 
 namespace TransactionService.Application.Commands;
 
@@ -30,11 +31,18 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
     public async Task<Guid> HandleAsync(CreateTransactionCommand command, CancellationToken cancellationToken)
     {
-        var transactionId = Guid.NewGuid();
-        var streamName = $"transaction-{transactionId}";
-        var expectedVersion = StreamState.NoStream;
+        var @event = (TransactionCreatedEvent)command;
 
-        var @event = new TransactionCreatedEvent(transactionId, command.AccountId, command.Amount, DateTime.UtcNow);
+        var accountId = @event.AccountId.ToString();
+
+        var id = DeterministicId.For(accountId, @event.CreatedAt);
+
+        var streamTransactionId = id.ToString();
+
+        var eventId = Uuid.FromGuid(id);
+
+        var streamName = $"transaction-{streamTransactionId}";
+        var expectedVersion = StreamState.Any;
 
         var properties = new BasicProperties
         {
@@ -42,7 +50,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
         };
 
         var eventData = new EventData(
-            Uuid.NewUuid(),
+            eventId,
             nameof(TransactionCreatedEvent),
             JsonSerializer.SerializeToUtf8Bytes(@event));
 
@@ -58,7 +66,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                     retryCount: 3,
                     sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(100 * attempt),
                     onRetry: (ex, ts, retryCount, _) =>
-                        _logger.LogWarning(ex, "Concurrency conflict on EventStore write, retry {RetryCount}", retryCount)
+                        _logger.LogWarning(ex, "RpcException, retry {RetryCount}", retryCount)
                 )
                 .ExecuteAsync(async () =>
                 {
@@ -70,7 +78,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 });
 
             // Idempotent projection write
-            var projection = new TransactionProjection(transactionId.ToString(), command.AccountId.ToString(), command.Amount, @event.CreatedAt);
+            var projection = new TransactionProjection(@event.TransactionId.ToString(), accountId, command.Amount, @event.CreatedAt);
 
             var replaceResult = await _transaction.ReplaceOneAsync(
                 filter: x => x.TransactionId == projection.TransactionId,
@@ -93,11 +101,11 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
             _logger.LogInformation("Published TransactionCreatedEvent to RabbitMQ");
 
-            return transactionId;
+            return id;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process transaction {TransactionId}, sending to DLQ", transactionId);
+            _logger.LogError(ex, "Failed to process transaction {TransactionId}, sending to DLQ", streamTransactionId);
 
             // Send failed command to DLQ
             var dlqBody = JsonSerializer.SerializeToUtf8Bytes(new
@@ -105,7 +113,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 FailedAt = DateTime.UtcNow,
                 Command = command,
                 Reason = ex.Message,
-                TransactionId = transactionId
+                @event.TransactionId
             });
 
             await _channel.BasicPublishAsync(

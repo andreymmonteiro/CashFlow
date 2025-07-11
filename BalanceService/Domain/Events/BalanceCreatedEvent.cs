@@ -1,6 +1,4 @@
 ﻿namespace BalanceService.Domain.Events
 {
-    public class BalanceCreatedEvent
-    {
-    }
+    public record BalanceCreatedEvent(string AccountId, decimal Amount);
 }
