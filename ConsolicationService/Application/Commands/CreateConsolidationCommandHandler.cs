@@ -57,6 +57,7 @@ namespace ConsolicationService.Application.Commands
 
                 var filter = Builders<ConsolidationProjection>.Filter.And(
                     Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
+                    Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date),
                     Builders<ConsolidationProjection>.Filter.Not(
                         Builders<ConsolidationProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, consolidationId))
                 );

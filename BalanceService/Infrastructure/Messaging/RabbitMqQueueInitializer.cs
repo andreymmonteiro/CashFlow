@@ -23,6 +23,14 @@ namespace BalanceService.Infrastructure.Messaging
                 autoDelete: false,
                 arguments: null,
                 cancellationToken: cancellationToken);
+
+            await channel.QueueDeclareAsync(
+                queue: "balance.dlq",
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null,
+                cancellationToken: cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

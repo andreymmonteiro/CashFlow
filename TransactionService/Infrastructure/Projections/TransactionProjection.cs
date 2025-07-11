@@ -1,7 +1,13 @@
-﻿namespace TransactionService.Infrastructure.Projections
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace TransactionService.Infrastructure.Projections
 {
     public record TransactionProjection
     {
+        [BsonElement("_id")]
+        public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
+
         public string TransactionId { get; set; }
         
         public string AccountId { get; set; }

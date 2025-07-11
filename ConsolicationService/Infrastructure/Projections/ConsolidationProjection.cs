@@ -1,10 +1,13 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace ConsolicationService.Infrastructure.Projections
 {
     public sealed class ConsolidationProjection
     {
-        [BsonId]
+        [BsonElement("_id")]
+        public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
+
         public DateTime Date { get; set; }
 
         public string AccountId { get; set; }

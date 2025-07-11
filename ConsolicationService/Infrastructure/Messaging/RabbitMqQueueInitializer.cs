@@ -1,4 +1,5 @@
-﻿using ConsolicationService.Infrastructure.Messaging.Channels;
+﻿using System.Threading.Channels;
+using ConsolicationService.Infrastructure.Messaging.Channels;
 
 namespace ConsolicationService.Infrastructure.Messaging
 {
@@ -18,6 +19,14 @@ namespace ConsolicationService.Infrastructure.Messaging
 
             await channel.QueueDeclareAsync(
                 queue: "consolidation.created",
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            await channel.QueueDeclareAsync(
+                queue: "consolidation.dlq",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
