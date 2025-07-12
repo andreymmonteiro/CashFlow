@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
 using TransactionService.Domain.Events;
+using TransactionService.Infrastructure.EventStore;
 using TransactionService.Infrastructure.Projections;
 using TransactionService.Infrastructure.Utilities;
 
@@ -12,13 +13,13 @@ namespace TransactionService.Application.Commands;
 
 public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTransactionCommand, Guid>
 {
-    private readonly EventStoreClient _eventStore;
+    private readonly IEventStoreWrapper _eventStore;
     private readonly IMongoCollection<TransactionProjection> _transaction;
     private readonly IChannel _channel;
     private readonly ILogger<CreateTransactionCommandHandler> _logger;
 
     public CreateTransactionCommandHandler(
-        EventStoreClient eventStore,
+        IEventStoreWrapper eventStore,
         IMongoCollection<TransactionProjection> mongoCollection,
         IChannel channel,
         ILogger<CreateTransactionCommandHandler> logger)

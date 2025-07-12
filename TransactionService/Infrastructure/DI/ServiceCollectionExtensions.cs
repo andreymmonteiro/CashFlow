@@ -1,6 +1,7 @@
 ﻿using EventStore.Client;
 using MongoDB.Driver;
 using RabbitMQ.Client;
+using TransactionService.Infrastructure.EventStore;
 using TransactionService.Infrastructure.Projections;
 using static MongoDB.Driver.WriteConcern;
 
@@ -62,6 +63,8 @@ namespace TransactionService.Infrastructure.DI
                 var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
                 return new EventStoreClient(settings);
             });
+
+            services.AddSingleton<IEventStoreWrapper, EventStoreWrapper>();
 
             return services;
         }

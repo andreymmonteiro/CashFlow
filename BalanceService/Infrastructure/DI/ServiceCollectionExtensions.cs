@@ -1,4 +1,5 @@
-﻿using BalanceService.Infrastructure.Messaging;
+﻿using BalanceService.Infrastructure.EventStore;
+using BalanceService.Infrastructure.Messaging;
 using BalanceService.Infrastructure.Projections;
 using EventStore.Client;
 using MongoDB.Driver;
@@ -61,6 +62,8 @@ namespace BalanceService.Infrastructure.DI
                 var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
                 return new EventStoreClient(settings);
             });
+
+            services.AddSingleton<IEventStoreWrapper, EventStoreWrapper>();
 
             return services;
         }

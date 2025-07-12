@@ -1,4 +1,5 @@
-﻿using ConsolicationService.Infrastructure.Messaging;
+﻿using ConsolicationService.Infrastructure.EventStore;
+using ConsolicationService.Infrastructure.Messaging;
 using ConsolicationService.Infrastructure.Projections;
 using EventStore.Client;
 using MongoDB.Driver;
@@ -63,6 +64,8 @@ namespace ConsolicationService.Infrastructure.DI
                 var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
                 return new EventStoreClient(settings);
             });
+
+            services.AddSingleton<IEventStoreWrapper, EventStoreWrapper>();
 
             return services;
         }
