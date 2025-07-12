@@ -36,7 +36,7 @@ public class Program
 
         }
 
-        AddSwagger(builder.Services, builder.Environment);
+        //AddSwagger(builder.Services, builder.Environment);
 
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
 
@@ -85,8 +85,8 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            //app.UseSwagger();
+            //app.UseSwaggerUI();
         }
 
         app.UseHttpsRedirection();

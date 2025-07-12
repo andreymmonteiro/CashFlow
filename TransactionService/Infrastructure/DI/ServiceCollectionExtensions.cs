@@ -3,7 +3,6 @@ using MongoDB.Driver;
 using RabbitMQ.Client;
 using TransactionService.Infrastructure.EventStore;
 using TransactionService.Infrastructure.Projections;
-using static MongoDB.Driver.WriteConcern;
 
 namespace TransactionService.Infrastructure.DI
 {

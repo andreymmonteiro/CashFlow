@@ -51,5 +51,39 @@ services:
     depends_on:
       - mongodbStandalone
 
+  consolicationservice:
+    build:
+      context: ./ConsolicationService
+      dockerfile: Dockerfile
+    container_name: consolicationservice
+    ports:
+      - "8083:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+    depends_on:
+      - rabbitmq
+      - mongodbStandalone
+      - eventstore
+
+  transactionservice:
+    build:
+      context: ./TransactionService
+      dockerfile: Dockerfile
+    container_name: transactionservice
+    ports:
+      - "8082:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+    depends_on:
+      - rabbitmq
+      - mongodbStandalone
+      - eventstore
+
 volumes:
   db_data:
