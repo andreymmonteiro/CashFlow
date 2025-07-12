@@ -1,3 +1,4 @@
+using System;
 using EventStore.Client;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
@@ -19,6 +20,11 @@ public class Program
 
         builder.Services.AddLogging();
 
+        builder.Services.AddEndpointsApiExplorer();
+
+        AddSwagger(builder.Services, builder.Environment);
+
+
         var factory = builder.Services
             .AddRabbitMq();
 
@@ -35,8 +41,6 @@ public class Program
             builder.Services.AddSingleton(connection);
 
         }
-
-        //AddSwagger(builder.Services, builder.Environment);
 
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
 
@@ -82,11 +86,11 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+
+        if (!builder.Environment.IsEnvironment("FunctionalTest") && !builder.Environment.IsEnvironment("FunctionalTest"))
         {
-            //app.UseSwagger();
-            //app.UseSwaggerUI();
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
         app.UseHttpsRedirection();
