@@ -6,5 +6,5 @@ public record BalanceResponse(string AccountId, decimal Amount)
 {
 
     public static explicit operator BalanceResponse(BalanceProjection balanceProjection)
-        => new(balanceProjection.AccountId, balanceProjection.Amount);
+        => new(balanceProjection?.AccountId ?? string.Empty, balanceProjection?.Amount ?? 0);
 }

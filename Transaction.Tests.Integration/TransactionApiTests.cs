@@ -59,7 +59,7 @@ namespace Transaction.Tests.Integration
             var request = new CreateTransactionCommand(Guid.NewGuid(), 100.50m);
 
             // Act
-            var response = await client.PostAsJsonAsync("/transactions", request);
+            var response = await client.PostAsJsonAsync("api/transactions", request);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -69,7 +69,7 @@ namespace Transaction.Tests.Integration
         }
 
         [Fact]
-        public async Task GetTransactions_Returns_Results()
+        public async Task GetTransactions_ByAccountIdAndRAngeDate_ReturnsTransactions()
         {
             // Arrange
             var client = _factory.WithWebHostBuilder(builder =>
@@ -102,7 +102,7 @@ namespace Transaction.Tests.Integration
             };
 
             // Act
-            var response = await client.PostAsJsonAsync("/account/transactions/query", request);
+            var response = await client.PostAsJsonAsync("/api/account/transactions/query", request);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);

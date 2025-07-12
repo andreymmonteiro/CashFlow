@@ -4,7 +4,6 @@ using ConsolicationService.Infrastructure.Projections;
 using EventStore.Client;
 using MongoDB.Driver;
 using RabbitMQ.Client;
-using static MongoDB.Driver.WriteConcern;
 
 namespace ConsolicationService.Infrastructure.DI
 {
@@ -33,7 +32,6 @@ namespace ConsolicationService.Infrastructure.DI
             services.AddSingleton(factory);
 
             services.AddHostedService<RabbitMqQueueInitializer>();
-
 
             return factory;
         }

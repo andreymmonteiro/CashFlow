@@ -92,7 +92,7 @@ public class Program
 
         app.UseExceptionHandler();
 
-        app.MapPost("/transactions", async (
+        app.MapPost("/api/transactions", async (
             CreateTransactionCommand command,
             ICommandHandler<CreateTransactionCommand, Guid> handler,
             CancellationToken cancellationToken) =>
@@ -103,7 +103,7 @@ public class Program
         .WithDescription("Creates a new transaction and emits an event")
         .WithSummary("Create transaction");
 
-        app.MapPost("/account/transactions/query", async (
+        app.MapPost("/api/account/transactions/query", async (
                 DailyTransactionRequest request,
                 IQueryHandler<DailyTransactionRequest, DailyTransactionResponse> handler,
                 CancellationToken cancellationToken) =>

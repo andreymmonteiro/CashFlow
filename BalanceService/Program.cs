@@ -8,109 +8,122 @@ using BalanceService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace BalanceService;
 
-// Add services to the container.
-
-builder.Services.AddLogging();
-
-var factory = builder.Services
-    .AddRabbitMq();
-
-builder.Services
-    .AddMongoDb()
-    .AddEventStore();
-
-await RegisterChannels(factory);
-
-builder.Services.AddHostedService<CreatedConsolidationConsumer>();
-
-builder.Services.AddScoped<ICommandHandler<CreateBalanceCommand, long>, CreateBalanceCommandHandler>();
-
-builder.Services.AddScoped<IQueryHandler<BalanceRequest, BalanceResponse>, BalanceQueryHandler>();
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddExceptionHandler(options =>
+public class Program
 {
-    options.AllowStatusCode404Response = false;
-
-    options.ExceptionHandler = async context =>
+    public static async Task Main(string[] args)
     {
-        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
-                                            .CreateLogger("GlobalExceptionHandler");
+        var builder = WebApplication.CreateBuilder(args);
 
-        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        // Add services to the container.
 
-        if (exception is BadHttpRequestException badHttpRequest)
+        builder.Services.AddLogging();
+
+        if (!builder.Environment.IsEnvironment("Testing"))
         {
-            // handle bad HTTP request
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new
-            {
-                Message = $"Bad request: {badHttpRequest?.InnerException?.Message ?? badHttpRequest?.Message}"
-            });
-            return;
+            var factory = builder.Services
+                .AddRabbitMq();
+
+            builder.Services
+                .AddMongoDb()
+                .AddEventStore();
+
+            await RegisterChannels(factory);
         }
 
-        logger.LogError(exception, "An unhandled exception occurred.");
+        builder.Services.AddHostedService<CreatedConsolidationConsumer>();
 
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        context.Response.ContentType = "application/json";
+        builder.Services.AddScoped<ICommandHandler<CreateBalanceCommand, long>, CreateBalanceCommandHandler>();
 
-        var errorResponse = new
+        builder.Services.AddScoped<IQueryHandler<BalanceRequest, BalanceResponse>, BalanceQueryHandler>();
+
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        builder.Services.AddExceptionHandler(options =>
         {
-            Message = "An unexpected error occurred. Please try again later."
-        };
+            options.AllowStatusCode404Response = false;
 
-        await context.Response.WriteAsJsonAsync(errorResponse);
-    };
-});
+            options.ExceptionHandler = async context =>
+            {
+                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+                                                    .CreateLogger("GlobalExceptionHandler");
 
-var app = builder.Build();
+                var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+                if (exception is BadHttpRequestException badHttpRequest)
+                {
+                    // handle bad HTTP request
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        Message = $"Bad request: {badHttpRequest?.InnerException?.Message ?? badHttpRequest?.Message}"
+                    });
+                    return;
+                }
+
+                logger.LogError(exception, "An unhandled exception occurred.");
+
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new
+                {
+                    Message = "An unexpected error occurred. Please try again later."
+                };
+
+                await context.Response.WriteAsJsonAsync(errorResponse);
+            };
+        });
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+
+        app.MapGet("/api/balance", async (Guid accountId, IQueryHandler<BalanceRequest, BalanceResponse> handler, CancellationToken cancellationToken) =>
+        {
+            var request = new BalanceRequest(accountId.ToString());
+            var result = await handler.HandleAsync(request, cancellationToken);
+
+            return Results.Ok(result);
+        })
+        .WithName("GetBalance")
+        .WithDescription("")
+        .WithSummary("Get balance by accountId");
+
+        await app.RunAsync();
+
+        async Task RegisterChannels(ConnectionFactory factory)
+        {
+            var connection = await factory.CreateConnectionAsync();
+
+            var createdTransactionConsumerChannel = new CreatedBalancePublisherChannel(connection);
+
+            await createdTransactionConsumerChannel.InitializeChannelAsync();
+
+            builder.Services.AddSingleton<ICreatedBalancePublisherChannel>(createdTransactionConsumerChannel);
+
+            var createdConsolidationPublisherChannel = new CreatedConsolidationConsumerChannel(connection);
+
+            await createdConsolidationPublisherChannel.InitializeChannelAsync();
+
+            builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel>(createdConsolidationPublisherChannel);
+
+            var rabbitMqQueueInitializerChannel = new RabbitMqQueueInitializerChannel(connection);
+
+            await rabbitMqQueueInitializerChannel.InitializeChannelAsync();
+
+            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel>(rabbitMqQueueInitializerChannel);
+        }
+    }
 }
 
-app.UseHttpsRedirection();
 
-app.MapGet("/balance", async (Guid accountId, IQueryHandler<BalanceRequest, BalanceResponse> handler, CancellationToken cancellationToken) =>
-{
-    var request = new BalanceRequest(accountId.ToString());
-    var result = await handler.HandleAsync(request, cancellationToken);
-
-    return Results.Ok(result);
-})
-.WithName("GetBalance")
-.WithDescription("")
-.WithSummary("Get balance by accountId");
-
-await app.RunAsync();
-
-async Task RegisterChannels(ConnectionFactory factory)
-{
-    var connection = await factory.CreateConnectionAsync();
-
-    var createdTransactionConsumerChannel = new CreatedBalancePublisherChannel(connection);
-
-    await createdTransactionConsumerChannel.InitializeChannelAsync();
-
-    builder.Services.AddSingleton<ICreatedBalancePublisherChannel>(createdTransactionConsumerChannel);
-
-    var createdConsolidationPublisherChannel = new CreatedConsolidationConsumerChannel(connection);
-
-    await createdConsolidationPublisherChannel.InitializeChannelAsync();
-
-    builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel>(createdConsolidationPublisherChannel);
-
-    var rabbitMqQueueInitializerChannel = new RabbitMqQueueInitializerChannel(connection);
-
-    await rabbitMqQueueInitializerChannel.InitializeChannelAsync();
-
-    builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel>(rabbitMqQueueInitializerChannel);
-}

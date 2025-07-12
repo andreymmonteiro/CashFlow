@@ -18,14 +18,17 @@ public class Program
 
         builder.Services.AddLogging();
 
-        var factory = builder.Services
-            .AddRabbitMq();
+        if (!builder.Environment.IsEnvironment("Testing"))
+        {
+            var factory = builder.Services
+                .AddRabbitMq();
 
-        builder.Services
-            .AddMongoDb()
-            .AddEventStore();
+            builder.Services
+                .AddMongoDb()
+                .AddEventStore();
 
-        await RegisterChannels(factory);
+            await RegisterChannels(factory);
+        }
 
         builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand, long>, CreateConsolidationCommandHandler>();
 
@@ -99,9 +102,9 @@ public class Program
         app.Run();
 
 
-        async Task RegisterChannels(ConnectionFactory factory)
+        async Task RegisterChannels(IConnectionFactory factory)
         {
-            var connection = await factory.CreateConnectionAsync();
+            using var connection = await factory.CreateConnectionAsync();
 
             var createdTransactionConsumerChannel = new CreatedTransactionConsumerChannel(connection);
 
