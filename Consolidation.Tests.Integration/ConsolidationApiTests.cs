@@ -44,17 +44,17 @@ namespace Consolidation.Tests.Integration
 
                     var createdTransactionConsumerChannel = Substitute.For<ICreatedTransactionConsumerChannel>();
 
-                    createdTransactionConsumerChannel.Channel
+                    createdTransactionConsumerChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     var createdConsolidationPublisherChannel = Substitute.For<ICreatedConsolidationPublisherChannel>();
 
-                    createdConsolidationPublisherChannel.Channel
+                    createdConsolidationPublisherChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     var rabbitMqQueueInitializerChannel = Substitute.For<IRabbitMqQueueInitializerChannel>();
 
-                    rabbitMqQueueInitializerChannel.Channel
+                    rabbitMqQueueInitializerChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     services.AddSingleton(createdConsolidationPublisherChannel);

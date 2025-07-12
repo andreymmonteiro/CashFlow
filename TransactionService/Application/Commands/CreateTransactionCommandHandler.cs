@@ -14,24 +14,27 @@ namespace TransactionService.Application.Commands;
 public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTransactionCommand, Guid>
 {
     private readonly IEventStoreWrapper _eventStore;
+    private readonly IConnection _connection;
     private readonly IMongoCollection<TransactionProjection> _transaction;
-    private readonly IChannel _channel;
     private readonly ILogger<CreateTransactionCommandHandler> _logger;
 
     public CreateTransactionCommandHandler(
         IEventStoreWrapper eventStore,
+        IConnection connection,
         IMongoCollection<TransactionProjection> mongoCollection,
-        IChannel channel,
-        ILogger<CreateTransactionCommandHandler> logger)
+        ILogger<CreateTransactionCommandHandler> logger
+        )
     {
         _eventStore = eventStore;
+        _connection = connection;
         _transaction = mongoCollection;
-        _channel = channel;
         _logger = logger;
     }
 
     public async Task<Guid> HandleAsync(CreateTransactionCommand command, CancellationToken cancellationToken)
     {
+        using var channel = await _connection.CreateChannelAsync();
+
         var @event = (TransactionCreatedEvent)command;
 
         var accountId = @event.AccountId.ToString();
@@ -99,7 +102,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
             // Publish event
             var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
-            await _channel.BasicPublishAsync(
+            await channel.BasicPublishAsync(
                 exchange: "",
                 routingKey: "transaction.created",
                 mandatory: true,
@@ -124,7 +127,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 @event.TransactionId
             });
 
-            await _channel.BasicPublishAsync(
+            await channel.BasicPublishAsync(
                 exchange: "",
                 routingKey: "transaction.dlq",
                 mandatory: true,

@@ -2,11 +2,13 @@
 
 namespace TransactionService.Infrastructure
 {
-    public sealed class RabbitMqQueueInitializer(IChannel Channel) : IHostedService
+    public sealed class RabbitMqQueueInitializer(IConnection connection) : IHostedService
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await Channel.QueueDeclareAsync(
+            using var channel = await connection.CreateChannelAsync();
+
+            await channel.QueueDeclareAsync(
                 queue: "transaction.created",
                 durable: true,
                 exclusive: false,
@@ -14,7 +16,7 @@ namespace TransactionService.Infrastructure
                 arguments: null,
                 cancellationToken: cancellationToken);
 
-            await Channel.QueueDeclareAsync(
+            await channel.QueueDeclareAsync(
                 queue: "transaction.dlq",
                 durable: true,
                 exclusive: false,

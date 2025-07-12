@@ -1,5 +1,4 @@
-﻿using System.Threading.Channels;
-using ConsolicationService.Infrastructure.Messaging.Channels;
+﻿using ConsolicationService.Infrastructure.Messaging.Channels;
 
 namespace ConsolicationService.Infrastructure.Messaging
 {
@@ -7,7 +6,7 @@ namespace ConsolicationService.Infrastructure.Messaging
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var channel = rabbitMqQueueInitializerChannel.Channel;
+            var channel = await rabbitMqQueueInitializerChannel.CreateChannelAsync();
 
             await channel.QueueDeclareAsync(
                 queue: "transaction.created",

@@ -46,9 +46,9 @@ namespace Transaction.Tests.Integration
 
                     services.AddSingleton(collection);
 
-                    var channel = Substitute.For<IChannel>();
+                    var connection = Substitute.For<IConnection>();
 
-                    services.AddSingleton(channel);
+                    services.AddSingleton(connection);
 
                     services.AddSingleton(eventStore);
 
@@ -86,9 +86,9 @@ namespace Transaction.Tests.Integration
 
                     services.AddSingleton(collection);
 
-                    var channel = Substitute.For<IChannel>();
+                    var connection = Substitute.For<IConnection>();
 
-                    services.AddSingleton(channel);
+                    services.AddSingleton(connection);
 
                 });
 

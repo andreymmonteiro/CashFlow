@@ -42,7 +42,7 @@ namespace ConsolicationService.Application.Commands
 
             var eventId = Uuid.FromGuid(id);
 
-            var channel = _createdConsolidationPublisherChannel.Channel;
+            var channel = await _createdConsolidationPublisherChannel.CreateChannelAsync();
 
             var consolidationId = id.ToString();
 

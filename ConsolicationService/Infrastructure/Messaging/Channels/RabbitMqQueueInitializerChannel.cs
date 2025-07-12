@@ -4,7 +4,7 @@ namespace ConsolicationService.Infrastructure.Messaging.Channels;
 
 public interface IRabbitMqQueueInitializerChannel : IConsolidationChannel;
 
-public class RabbitMqQueueInitializerChannel : IRabbitMqQueueInitializerChannel
+public class RabbitMqQueueInitializerChannel : AsyncDisposableChannelBase, IRabbitMqQueueInitializerChannel
 {
     private readonly IConnection _connection;
 
@@ -13,13 +13,15 @@ public class RabbitMqQueueInitializerChannel : IRabbitMqQueueInitializerChannel
         _connection = connection;
     }
 
-    public IChannel Channel { get; private set; }
-
-    public async Task InitializeChannelAsync()
+    public async Task<IChannel> CreateChannelAsync()
     {
-        Channel = await _connection.CreateChannelAsync();
+        var channel = await _connection.CreateChannelAsync();
 
-        await Channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+        await channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+
+        SetChannel(channel);
+
+        return channel;
 
     }
 }

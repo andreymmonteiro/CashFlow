@@ -45,17 +45,17 @@ namespace Balance.Tests.Integration
 
                     var createdBalancePublisherChannel = Substitute.For<ICreatedBalancePublisherChannel>();
 
-                    createdBalancePublisherChannel.Channel
+                    createdBalancePublisherChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     var createdConsolidationConsumerChannel = Substitute.For<ICreatedConsolidationConsumerChannel>();
 
-                    createdConsolidationConsumerChannel.Channel
+                    createdConsolidationConsumerChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     var rabbitMqQueueInitializerChannel = Substitute.For<IRabbitMqQueueInitializerChannel>();
 
-                    rabbitMqQueueInitializerChannel.Channel
+                    rabbitMqQueueInitializerChannel.CreateChannelAsync()
                         .Returns(Substitute.For<IChannel>());
 
                     services.AddSingleton(createdBalancePublisherChannel);

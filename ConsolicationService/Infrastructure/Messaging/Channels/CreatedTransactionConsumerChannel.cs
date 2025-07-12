@@ -4,22 +4,24 @@ namespace ConsolicationService.Infrastructure.Messaging.Channels
 {
     public interface ICreatedTransactionConsumerChannel : IConsolidationChannel;
 
-    public class CreatedTransactionConsumerChannel : ICreatedTransactionConsumerChannel
+    public class CreatedTransactionConsumerChannel : AsyncDisposableChannelBase, ICreatedTransactionConsumerChannel
     {
         private readonly IConnection _connection;
-
-        public IChannel Channel { get; private set; }
 
         public CreatedTransactionConsumerChannel(IConnection connection)
         {
             _connection = connection;
         }
 
-        public async Task InitializeChannelAsync()
+        public async Task<IChannel> CreateChannelAsync()
         {
-            Channel = await _connection.CreateChannelAsync();
+            var channel = await _connection.CreateChannelAsync();
 
-            await Channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+
+            SetChannel(channel);
+
+            return channel;
 
         }
     }

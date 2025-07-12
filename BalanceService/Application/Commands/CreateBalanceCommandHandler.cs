@@ -28,6 +28,8 @@ namespace BalanceService.Application.Commands
 
         public async Task<long> HandleAsync(CreateBalanceCommand command, CancellationToken cancellationToken)
         {
+            var channel = await _publisherChannel.CreateChannelAsync();
+
             var properties = new BasicProperties
             {
                 Persistent = true
@@ -40,8 +42,6 @@ namespace BalanceService.Application.Commands
             var id = DeterministicId.For(command.AccountId, date);
 
             var eventId = Uuid.FromGuid(id);
-
-            var channel = _publisherChannel.Channel;
 
             var balanceId = id.ToString();
 

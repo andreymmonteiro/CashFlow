@@ -4,7 +4,7 @@ namespace BalanceService.Infrastructure.Messaging.Channel;
 
 public interface ICreatedConsolidationConsumerChannel : IBalanceChannel;
 
-public class CreatedConsolidationConsumerChannel : ICreatedConsolidationConsumerChannel
+public class CreatedConsolidationConsumerChannel : AsyncDisposableChannelBase, ICreatedConsolidationConsumerChannel
 {
     private readonly IConnection _connection;
 
@@ -13,12 +13,12 @@ public class CreatedConsolidationConsumerChannel : ICreatedConsolidationConsumer
         _connection = connection;
     }
 
-    public IChannel Channel { get; private set; }
-
-    public async Task InitializeChannelAsync()
+    public async Task<IChannel> CreateChannelAsync()
     {
-        Channel = await _connection.CreateChannelAsync();
+        var channel = await _connection.CreateChannelAsync();
 
-        await Channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+        await channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+
+        return channel;
     }
 }

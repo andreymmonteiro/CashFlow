@@ -1,5 +1,6 @@
 using EventStore.Client;
 using Microsoft.AspNetCore.Diagnostics;
+using RabbitMQ.Client;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Infrastructure.DI;
@@ -34,7 +35,7 @@ public class Program
 
             // Register the initialized connection/channel into DI
             builder.Services.AddSingleton(connection);
-            builder.Services.AddSingleton(channel);
+
         }
 
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();

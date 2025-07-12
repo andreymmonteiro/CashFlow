@@ -29,7 +29,7 @@ namespace ConsolicationService.Infrastructure.Messaging.Consumers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var channel = _consumerChannel.Channel;
+            var channel = await _consumerChannel.CreateChannelAsync();
 
             var consumer = new AsyncEventingBasicConsumer(channel);
 
@@ -73,7 +73,6 @@ namespace ConsolicationService.Infrastructure.Messaging.Consumers
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _consumerChannel?.Channel?.DisposeAsync();
             await base.StopAsync(cancellationToken);
         }
     }

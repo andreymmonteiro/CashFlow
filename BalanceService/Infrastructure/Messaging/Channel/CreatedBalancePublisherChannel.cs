@@ -4,7 +4,7 @@ namespace BalanceService.Infrastructure.Messaging.Channel;
 
 public interface ICreatedBalancePublisherChannel : IBalanceChannel;
 
-public class CreatedBalancePublisherChannel : ICreatedBalancePublisherChannel
+public class CreatedBalancePublisherChannel : AsyncDisposableChannelBase, ICreatedBalancePublisherChannel
 {
     private readonly IConnection _connection;
 
@@ -13,13 +13,13 @@ public class CreatedBalancePublisherChannel : ICreatedBalancePublisherChannel
         _connection = connection;
     }
 
-    public IChannel Channel { get; private set; }
-
-    public async Task InitializeChannelAsync()
+    public async Task<IChannel> CreateChannelAsync()
     {
-        Channel = await _connection.CreateChannelAsync();
+        var channel = await _connection.CreateChannelAsync();
 
-        await Channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+        await channel.QueueDeclareAsync("transaction.created", durable: true, exclusive: false, autoDelete: false);
+
+        return channel;
     }
 }
 

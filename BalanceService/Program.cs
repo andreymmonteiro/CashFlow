@@ -105,23 +105,13 @@ public class Program
         {
             var connection = await factory.CreateConnectionAsync();
 
-            var createdTransactionConsumerChannel = new CreatedBalancePublisherChannel(connection);
+            builder.Services.AddSingleton(connection); 
 
-            await createdTransactionConsumerChannel.InitializeChannelAsync();
+            builder.Services.AddScoped<ICreatedBalancePublisherChannel, CreatedBalancePublisherChannel>();
 
-            builder.Services.AddSingleton<ICreatedBalancePublisherChannel>(createdTransactionConsumerChannel);
+            builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel, CreatedConsolidationConsumerChannel>();
 
-            var createdConsolidationPublisherChannel = new CreatedConsolidationConsumerChannel(connection);
-
-            await createdConsolidationPublisherChannel.InitializeChannelAsync();
-
-            builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel>(createdConsolidationPublisherChannel);
-
-            var rabbitMqQueueInitializerChannel = new RabbitMqQueueInitializerChannel(connection);
-
-            await rabbitMqQueueInitializerChannel.InitializeChannelAsync();
-
-            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel>(rabbitMqQueueInitializerChannel);
+            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel, RabbitMqQueueInitializerChannel>();
         }
     }
 }

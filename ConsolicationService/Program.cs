@@ -104,25 +104,15 @@ public class Program
 
         async Task RegisterChannels(IConnectionFactory factory)
         {
-            using var connection = await factory.CreateConnectionAsync();
+            var connection = await factory.CreateConnectionAsync();
 
-            var createdTransactionConsumerChannel = new CreatedTransactionConsumerChannel(connection);
+            builder.Services.AddSingleton(connection);
 
-            await createdTransactionConsumerChannel.InitializeChannelAsync();
+            builder.Services.AddSingleton<ICreatedTransactionConsumerChannel, CreatedTransactionConsumerChannel>();
 
-            builder.Services.AddSingleton<ICreatedTransactionConsumerChannel>(createdTransactionConsumerChannel);
+            builder.Services.AddScoped<ICreatedConsolidationPublisherChannel, CreatedConsolidationPublisherChannel>();
 
-            var createdConsolidationPublisherChannel = new CreatedConsolidationPublisherChannel(connection);
-
-            await createdConsolidationPublisherChannel.InitializeChannelAsync();
-
-            builder.Services.AddSingleton<ICreatedConsolidationPublisherChannel>(createdConsolidationPublisherChannel);
-
-            var rabbitMqQueueInitializerChannel = new RabbitMqQueueInitializerChannel(connection);
-
-            await rabbitMqQueueInitializerChannel.InitializeChannelAsync();
-
-            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel>(rabbitMqQueueInitializerChannel);
+            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel, RabbitMqQueueInitializerChannel>();
         }
     }
 }

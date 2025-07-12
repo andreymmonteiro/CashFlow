@@ -6,7 +6,7 @@ namespace BalanceService.Infrastructure.Messaging
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var channel = rabbitMqQueueInitializerChannel.Channel;
+            var channel = await rabbitMqQueueInitializerChannel.CreateChannelAsync();
 
             await channel.QueueDeclareAsync(
                 queue: "consolidation.created",
