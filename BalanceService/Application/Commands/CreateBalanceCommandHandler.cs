@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using BalanceService.Domain.Events;
+using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
@@ -13,12 +14,12 @@ namespace BalanceService.Application.Commands
 {
     public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand, long>
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly IEventStoreWrapper _eventStore;
         private readonly ICreatedBalancePublisherChannel _publisherChannel;
         private readonly IMongoCollection<BalanceProjection> _balances;
         private readonly ILogger<CreateBalanceCommandHandler> _logger;
 
-        public CreateBalanceCommandHandler(EventStoreClient eventStore, ICreatedBalancePublisherChannel publisherChannel, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
+        public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, ICreatedBalancePublisherChannel publisherChannel, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
         {
             _publisherChannel = publisherChannel;
             _logger = logger;

@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using ConsolicationService.Domain.Events;
 using ConsolicationService.Domain.ValueObjects;
+using ConsolicationService.Infrastructure.EventStore;
 using ConsolicationService.Infrastructure.Messaging.Channels;
 using ConsolicationService.Infrastructure.Projections;
 using ConsolicationService.Infrastructure.Utilities;
@@ -14,12 +15,12 @@ namespace ConsolicationService.Application.Commands
 {
     public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolidationCommand, long>
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly IEventStoreWrapper _eventStore;
         private readonly ICreatedConsolidationPublisherChannel _createdConsolidationPublisherChannel;
         private readonly IMongoCollection<ConsolidationProjection> _consolidations;
         private readonly ILogger<CreateConsolidationCommandHandler> _logger;
 
-        public CreateConsolidationCommandHandler(EventStoreClient eventStore, ICreatedConsolidationPublisherChannel createdConsolidationPublisherChannel, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
+        public CreateConsolidationCommandHandler(IEventStoreWrapper eventStore, ICreatedConsolidationPublisherChannel createdConsolidationPublisherChannel, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
         {
             _eventStore = eventStore;
             _createdConsolidationPublisherChannel = createdConsolidationPublisherChannel;

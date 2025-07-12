@@ -28,8 +28,6 @@ public class Program
 
         if (!builder.Environment.IsEnvironment("Testing"))
         {
-            builder.Services.AddSwaggerGen();
-
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
 
@@ -37,6 +35,8 @@ public class Program
             builder.Services.AddSingleton(connection);
 
         }
+
+        AddSwagger(builder.Services, builder.Environment);
 
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
 
@@ -117,8 +117,6 @@ public class Program
         .WithDescription("")
         .WithSummary("Get transactions by account and date");
 
-
-
         app.MapGet("/administration/events", async (EventStoreClient client, CancellationToken cancellationToken) =>
         {
             var events = client.ReadAllAsync(Direction.Forwards, EventStore.Client.Position.Start, cancellationToken: cancellationToken);
@@ -142,5 +140,13 @@ public class Program
         });
 
         await app.RunAsync();
+
+        static void AddSwagger(IServiceCollection services, IWebHostEnvironment environment)
+        {
+            if (!environment.IsEnvironment("FunctionalTest") && !environment.IsEnvironment("FunctionalTest"))
+            {
+                services.AddSwaggerGen();
+            }
+        }
     }
 }
