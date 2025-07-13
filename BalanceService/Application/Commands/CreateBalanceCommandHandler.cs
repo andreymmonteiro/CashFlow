@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Threading;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging.Channel;
@@ -9,6 +10,7 @@ using Grpc.Core;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
+using static EventStore.Client.StreamMessage;
 
 namespace BalanceService.Application.Commands
 {
@@ -44,28 +46,16 @@ namespace BalanceService.Application.Commands
 
             var eventId = Uuid.FromGuid(id);
 
-            var balanceId = id.ToString();
+            var streamId = id.ToString();
 
             try
             {
                 _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Amount: {Amount}",
                                     command.AccountId, command.Amount);
 
-                await InsertEventAsync(@event, balanceId, eventId, cancellationToken);
+                await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 
-                var filter = Builders<BalanceProjection>.Filter.And(
-                    Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
-                    Builders<BalanceProjection>.Filter.Not(
-                        Builders<BalanceProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, balanceId))
-                );
-
-                var update = Builders<BalanceProjection>.Update
-                     .SetOnInsert(c => c.AccountId, command.AccountId)
-                     .Inc(c => c.Amount, @event.Amount)
-                     .Push(c => c.AppliedTransactionIds, balanceId);
-
-                var options = new UpdateOptions { IsUpsert = true };
-                var upsertResult = await _balances.UpdateOneAsync(filter, update, options, cancellationToken);
+                var modifiedCount = await UpsertProjectionAsync(@event, streamId, cancellationToken);
 
                 var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
@@ -79,7 +69,7 @@ namespace BalanceService.Application.Commands
 
                 _logger.LogInformation("Published BalanceCreatedEvent to RabbitMQ");
 
-                return upsertResult.ModifiedCount;
+                return modifiedCount;
             }
             catch(Exception e)
             {
@@ -91,7 +81,7 @@ namespace BalanceService.Application.Commands
                     FailedAt = DateTime.UtcNow,
                     Command = command,
                     Reason = e.Message,
-                    ConsolidationId = balanceId
+                    ConsolidationId = streamId
                 });
 
                 await channel.BasicPublishAsync(
@@ -103,6 +93,54 @@ namespace BalanceService.Application.Commands
 
                 return 0;
             }
+        }
+
+        private async Task<long> UpsertProjectionAsync(BalanceCreatedEvent @event, string streamId, CancellationToken cancellationToken)
+        {
+            var filter = Builders<BalanceProjection>.Filter.And(
+                Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, @event.AccountId),
+                Builders<BalanceProjection>.Filter.Not(
+                    Builders<BalanceProjection>.Filter.AnyEq(c => c.AppliedStreamIds, streamId))
+            );
+
+            var update = Builders<BalanceProjection>.Update
+                 .SetOnInsert(c => c.AccountId, @event.AccountId)
+                 .Inc(c => c.Amount, @event.Amount)
+                 .Push(c => c.AppliedStreamIds, streamId);
+
+            var options = new UpdateOptions { IsUpsert = false };
+            var upsertResult = await _balances.UpdateOneAsync(filter, update, options, cancellationToken);
+
+            if (upsertResult.ModifiedCount == 0)
+            {
+                var documentFilter = Builders<BalanceProjection>.Filter.And(
+                    Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, @event.AccountId));
+
+                var count = await _balances.CountDocumentsAsync(documentFilter, cancellationToken: cancellationToken);
+
+                if(count > 0)
+                {
+                    return 0;
+                }
+
+                var insertOptions = new InsertOneOptions()
+                {
+                    BypassDocumentValidation = true
+                };
+
+                var projection = new BalanceProjection
+                {
+                    AccountId = @event.AccountId,
+                    Amount = @event.Amount,
+                    AppliedStreamIds = new List<string> { streamId }
+                };
+
+                await _balances.InsertOneAsync(projection, insertOptions, cancellationToken);
+
+                return 1;
+            }
+
+            return upsertResult.ModifiedCount;
         }
 
         private async Task InsertEventAsync(BalanceCreatedEvent @event, string balanceId, Uuid eventId, CancellationToken cancellationToken)

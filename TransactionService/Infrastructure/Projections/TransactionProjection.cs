@@ -6,7 +6,7 @@ namespace TransactionService.Infrastructure.Projections
     public record TransactionProjection
     {
         [BsonElement("_id")]
-        public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
+        public ObjectId Id { get; }
 
         public string TransactionId { get; set; }
         
@@ -16,7 +16,7 @@ namespace TransactionService.Infrastructure.Projections
         
         public DateTime CreatedAt { get; set; }
 
-        public IList<string> AppliedTransactionIds { get; set; } = new List<string>();
+        public string AppliedStreamId { get; set; }
 
         public TransactionProjection(string transactionId, string accountId, decimal amount, DateTime createdAt)
         {

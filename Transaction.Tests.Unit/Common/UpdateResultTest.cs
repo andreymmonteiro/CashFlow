@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Transaction.Tests.Unit.Common
 {
-    internal class ReplaceOneResultTest : ReplaceOneResult
+    internal class UpdateResultTest : UpdateResult
     {
         public override bool IsAcknowledged => true;
 

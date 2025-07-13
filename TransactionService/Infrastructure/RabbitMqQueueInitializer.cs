@@ -9,6 +9,14 @@ namespace TransactionService.Infrastructure
             using var channel = await connection.CreateChannelAsync();
 
             await channel.QueueDeclareAsync(
+                queue: "create.transaction",
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            await channel.QueueDeclareAsync(
                 queue: "transaction.created",
                 durable: true,
                 exclusive: false,

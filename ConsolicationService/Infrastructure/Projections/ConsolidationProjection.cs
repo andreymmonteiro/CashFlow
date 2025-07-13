@@ -18,6 +18,6 @@ namespace ConsolicationService.Infrastructure.Projections
 
         public decimal TotalAmount { get; set; }
 
-        public IList<string> AppliedTransactionIds { get; set; } = new List<string>();
+        public IList<string> AppliedStreamIds { get; set; } = new List<string>();
     }
 }

@@ -12,6 +12,6 @@ namespace BalanceService.Infrastructure.Projections
 
         public decimal Amount { get; set; }
 
-        public IList<string> AppliedTransactionIds { get; set; } = new List<string>();
+        public IList<string> AppliedStreamIds { get; set; } = new List<string>();
     }
 }

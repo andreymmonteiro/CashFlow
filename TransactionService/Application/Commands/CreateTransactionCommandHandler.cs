@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using EventStore.Client;
 using Grpc.Core;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
@@ -39,13 +40,15 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
         var accountId = @event.AccountId.ToString();
 
+        var transactionId = @event.TransactionId.ToString();
+
         var id = DeterministicId.For(accountId, @event.CreatedAt);
 
-        var streamTransactionId = id.ToString();
+        var streamId = id.ToString();
 
         var eventId = Uuid.FromGuid(id);
 
-        var streamName = $"transaction-{streamTransactionId}";
+        var streamName = $"transaction-{streamId}";
         var expectedVersion = StreamState.Any;
 
         var properties = new BasicProperties
@@ -60,6 +63,9 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
         try
         {
+            _logger.LogInformation("Handling CreateTransactionCommand for AccountId: {AccountId}, Amount: {Amount}, TransactionId: {TransactionId}",
+                                command.AccountId, command.Amount, transactionId);
+
             // Retry EventStore append on RpcException
             await Policy
                 .Handle<RpcException>(ex =>
@@ -85,19 +91,28 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
             var projection = new TransactionProjection(@event.TransactionId.ToString(), accountId, command.Amount, @event.CreatedAt);
 
             var filter = Builders<TransactionProjection>.Filter.And(
-                Builders<TransactionProjection>.Filter.Eq(c => c.AccountId, command.AccountId.ToString()),
-                Builders<TransactionProjection>.Filter.Eq(c => c.TransactionId, @event.TransactionId.ToString()),
-                Builders<TransactionProjection>.Filter.Not(
-                    Builders<TransactionProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, streamTransactionId)));
+                Builders<TransactionProjection>.Filter.Eq(c => c.AccountId, accountId),
+                Builders<TransactionProjection>.Filter.Eq(c => c.TransactionId, transactionId),
+                Builders<TransactionProjection>.Filter.Eq(c => c.CreatedAt, @event.CreatedAt),
+                Builders<TransactionProjection>.Filter.Eq(c => c.AppliedStreamId, streamId)
+                );
 
+            var update = Builders<TransactionProjection>.Update
+                 .SetOnInsert(c => c.AccountId, accountId)
+                 .SetOnInsert(c => c.TransactionId, transactionId)
+                 .SetOnInsert(c => c.CreatedAt, @event.CreatedAt)
+                 .SetOnInsert(c => c.Amount, @event.Amount)
+                 .SetOnInsert(c => c.AppliedStreamId, streamId);
 
-            var replaceResult = await _transaction.ReplaceOneAsync(
+            var options = new UpdateOptions { IsUpsert = true };
+
+            var updateResult = await _transaction.UpdateOneAsync(
                     filter: filter,
-                    replacement: projection,
-                    options: new ReplaceOptions { IsUpsert = true },
+                    update: update,
+                    options: options,
                     cancellationToken);
 
-            _logger.LogInformation("MongoDB upsert result: {Result}", replaceResult);
+            _logger.LogInformation("MongoDB upsert result: {Result}", updateResult);
 
             // Publish event
             var body = JsonSerializer.SerializeToUtf8Bytes(@event);
@@ -116,15 +131,16 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process transaction {TransactionId}, sending to DLQ", streamTransactionId);
+            _logger.LogError(ex, "Failed to process transaction {TransactionId}, sending to DLQ", streamId);
 
             // Send failed command to DLQ
+            
             var dlqBody = JsonSerializer.SerializeToUtf8Bytes(new
             {
                 FailedAt = DateTime.UtcNow,
                 Command = command,
                 Reason = ex.Message,
-                @event.TransactionId
+                TransactionId = transactionId
             });
 
             await channel.BasicPublishAsync(

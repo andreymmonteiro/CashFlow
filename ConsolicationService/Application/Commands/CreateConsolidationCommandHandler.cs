@@ -7,9 +7,11 @@ using ConsolicationService.Infrastructure.Projections;
 using ConsolicationService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
+using static EventStore.Client.StreamMessage;
 
 namespace ConsolicationService.Application.Commands
 {
@@ -45,36 +47,16 @@ namespace ConsolicationService.Application.Commands
 
             var channel = await _createdConsolidationPublisherChannel.CreateChannelAsync();
 
-            var consolidationId = id.ToString();
+            var streamId = id.ToString();
 
             try
             {
                 _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
                     command.AccountId, command.Amount, command.CreatedAt);                
 
-                await InsertEventAsync(@event, consolidationId, eventId, cancellationToken);
+                await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 
-                var dateOnly = command.CreatedAt.Date;
-
-                var filter = Builders<ConsolidationProjection>.Filter.And(
-                    Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
-                    Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date),
-                    Builders<ConsolidationProjection>.Filter.Not(
-                        Builders<ConsolidationProjection>.Filter.AnyEq(c => c.AppliedTransactionIds, consolidationId))
-                );
-
-                ConsolidationAmount consolidationAmount = command.Amount;
-
-                var update = Builders<ConsolidationProjection>.Update
-                    .SetOnInsert(c => c.AccountId, command.AccountId)
-                    .SetOnInsert(c => c.Date, command.CreatedAt.Date)
-                    .SetOnInsert(c => c.TotalAmount, consolidationAmount.TotalAmount)
-                    .Inc(c => c.TotalDebits, consolidationAmount.Debit)
-                    .Inc(c => c.TotalCredits, consolidationAmount.Credit)
-                    .Push(c => c.AppliedTransactionIds, consolidationId);
-
-                var options = new UpdateOptions { IsUpsert = true };
-                var upsertResult = await _consolidations.UpdateOneAsync(filter, update, options, cancellationToken);
+                var modifiedCount = await UpsertProjectionAsync(command, streamId, cancellationToken);
 
                 var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
@@ -88,7 +70,7 @@ namespace ConsolicationService.Application.Commands
 
                 _logger.LogInformation("Published ConsolidationCreatedEvent to RabbitMQ");
 
-                return upsertResult.ModifiedCount;
+                return modifiedCount;
             }
             catch(Exception e)
             {
@@ -100,7 +82,7 @@ namespace ConsolicationService.Application.Commands
                     FailedAt = DateTime.UtcNow,
                     Command = command,
                     Reason = e.Message,
-                    ConsolidationId = consolidationId
+                    ConsolidationId = streamId
                 });
 
                 await channel.BasicPublishAsync(
@@ -112,6 +94,67 @@ namespace ConsolicationService.Application.Commands
 
                 return 0;
             }
+        }
+
+        private async Task<long> UpsertProjectionAsync(CreateConsolidationCommand command, string streamId, CancellationToken cancellationToken)
+        {
+            var filter = Builders<ConsolidationProjection>.Filter.And(
+                Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
+                Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date),
+                Builders<ConsolidationProjection>.Filter.Not(
+                    Builders<ConsolidationProjection>.Filter.AnyEq(c => c.AppliedStreamIds, streamId))
+            );
+
+            ConsolidationAmount consolidationAmount = command.Amount;
+
+            var update = Builders<ConsolidationProjection>.Update
+                .SetOnInsert(c => c.AccountId, command.AccountId)
+                .SetOnInsert(c => c.Date, command.CreatedAt.Date)
+                .SetOnInsert(c => c.TotalAmount, consolidationAmount.TotalAmount)
+                .Inc(c => c.TotalDebits, consolidationAmount.Debit)
+                .Inc(c => c.TotalCredits, consolidationAmount.Credit)
+                .AddToSet(c => c.AppliedStreamIds, streamId);
+
+            
+            var options = new UpdateOptions { IsUpsert = false };
+            var upsertResult = await _consolidations.UpdateOneAsync(filter, update, options, cancellationToken);
+
+            if (upsertResult.MatchedCount == 0)
+            {
+
+                var documentFilter = 
+                    Builders<ConsolidationProjection>.Filter.And(
+                        Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
+                        Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date));
+
+                var count = await _consolidations.CountDocumentsAsync(documentFilter, cancellationToken: cancellationToken);
+
+                if(count > 0)
+                {
+                    return 0; // Already exists, no need to insert
+                }
+
+                var projection = new ConsolidationProjection()
+                {
+                    AccountId = command.AccountId,
+                    Date = command.CreatedAt.Date,
+                    TotalAmount = consolidationAmount.TotalAmount,
+                    TotalDebits = consolidationAmount.Debit,
+                    TotalCredits = consolidationAmount.Credit,
+                    AppliedStreamIds = new List<string> { streamId }
+                };
+
+                var insertOptions = new InsertOneOptions()
+                {
+                    BypassDocumentValidation = true
+                };
+
+                await _consolidations.InsertOneAsync(projection, insertOptions, cancellationToken);
+
+                return 1;
+            }
+
+            return upsertResult.ModifiedCount;
         }
 
         private async Task InsertEventAsync(ConsolidationCreatedEvent @event, string consolidationId, Uuid eventId, CancellationToken cancellationToken)

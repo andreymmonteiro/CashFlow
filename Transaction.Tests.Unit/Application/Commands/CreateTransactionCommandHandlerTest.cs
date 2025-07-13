@@ -44,14 +44,15 @@ public class CreateTransactionCommandHandlerTests
         // Arrange
         var command = new CreateTransactionCommand(Guid.NewGuid(), 150m);
 
-        var replaceResult = new ReplaceOneResultTest();
+        var updateResult = new UpdateResultTest();
 
-        _mongoCollection.ReplaceOneAsync(
+        _mongoCollection.UpdateOneAsync(
             Arg.Any<FilterDefinition<TransactionProjection>>(),
-            Arg.Any<TransactionProjection>(),
-            Arg.Any<ReplaceOptions>(),
+            Arg.Any<UpdateDefinition<TransactionProjection>>(),
+            Arg.Any<UpdateOptions>(),
             Arg.Any<CancellationToken>())
-        .Returns(await Task.FromResult(replaceResult));
+            .Returns(await Task.FromResult(updateResult));
+
 
         // Act
         var result = await _handler.HandleAsync(command, CancellationToken.None);
@@ -72,10 +73,10 @@ public class CreateTransactionCommandHandlerTests
             Arg.Any<ReadOnlyMemory<byte>>(),
             Arg.Any<CancellationToken>());
 
-        await _mongoCollection.Received(1).ReplaceOneAsync(
+        await _mongoCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<TransactionProjection>>(),
-            Arg.Any<TransactionProjection>(),
-            Arg.Any<ReplaceOptions>(),
+            Arg.Any<UpdateDefinition<TransactionProjection>>(),
+            Arg.Any<UpdateOptions>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -85,12 +86,12 @@ public class CreateTransactionCommandHandlerTests
         // Arrange
         var command = new CreateTransactionCommand(Guid.NewGuid(), 150m);
 
-        _mongoCollection.ReplaceOneAsync(
+        _mongoCollection.UpdateOneAsync(
             Arg.Any<FilterDefinition<TransactionProjection>>(),
-            Arg.Any<TransactionProjection>(),
-            Arg.Any<ReplaceOptions>(),
-            Arg.Any<CancellationToken>())
-        .Returns<Task<ReplaceOneResult>>(x => throw new Exception("Test failure"));
+            Arg.Any<UpdateDefinition<TransactionProjection>>(),
+            Arg.Any<UpdateOptions>(),
+            Arg.Any<CancellationToken>()).Returns<Task<UpdateResult>>(x => throw new Exception("Test failure"));
+
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<Exception>(() => _handler.HandleAsync(command, CancellationToken.None));

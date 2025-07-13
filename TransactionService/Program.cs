@@ -5,6 +5,7 @@ using RabbitMQ.Client;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Infrastructure.DI;
+using TransactionService.Infrastructure.Messaging.Consumers;
 using TransactionService.Presentation.Dtos.Request;
 using TransactionService.Presentation.Dtos.Response;
 
@@ -45,6 +46,8 @@ public class Program
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
 
         builder.Services.AddScoped<IQueryHandler<DailyTransactionRequest, DailyTransactionResponse>, DailyTransactionQueryHandler>();
+
+        builder.Services.AddHostedService<CreateTransactionConsumer>();
 
         builder.Services.AddExceptionHandler(options =>
         {
