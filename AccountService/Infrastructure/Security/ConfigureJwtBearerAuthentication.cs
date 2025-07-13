@@ -7,29 +7,6 @@ namespace AccountService.Infrastructure.Security
 {
     public static class JwtBearerAuthenticationOptions
     {
-        public static IServiceCollection ConfigureJwtBearerAuthentication(this IServiceCollection services)
-        {
-            services.AddAuthentication("Bearer")
-                    .AddJwtBearer("Bearer", options =>
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-                            ValidIssuer = "AccountService",
-                            ValidAudience = "CashFlowApp",
-                            IssuerSigningKey = new SymmetricSecurityKey(
-                                Encoding.UTF8.GetBytes("SuperMegaBlasterSecretKey12345"))
-                        };
-                    });
-
-            services.AddAuthorization();
-
-            return services;
-        }
-
         public static string Authenticate(string userId, string userName, string email)
         {
             var claims = new[]

@@ -51,5 +51,99 @@ services:
     depends_on:
       - mongodbStandalone
 
+  transactionservice:
+    build:
+      context: ./TransactionService
+      dockerfile: Dockerfile
+    container_name: transactionservice
+    ports:
+      - "5106:80"       # inside container runs on 80, map to 5106
+      - "7203:443"      # optional, if you need https dev cert
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandalone
+      - eventstore
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+
+  consolidationservice:
+    build:
+      context: ./ConsolicationService
+      dockerfile: Dockerfile
+    container_name: consolidationservice
+    ports:
+      - "5010:80"       # inside container runs on 80, map to 5106
+      - "7061:443"      # optional, if you need https dev cert
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandalone
+      - eventstore
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+
+  balanceservice:
+    build:
+      context: ./BalanceService
+      dockerfile: Dockerfile
+    container_name: balanceservice
+    ports:
+      - "5070:80"       # inside container runs on 80, map to 5106
+      - "7219:443"      # optional, if you need https dev cert
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandalone
+      - eventstore
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+
+  accountservice:
+    build:
+      context: ./AccountService
+      dockerfile: Dockerfile
+    container_name: accountservice
+    ports:
+      - "5020:80"       # inside container runs on 80, map to 5106
+      - "7071:443"      # optional, if you need https dev cert
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
+      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - mongodbStandalone
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+
 volumes:
   db_data:

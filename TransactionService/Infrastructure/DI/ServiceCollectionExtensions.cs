@@ -9,11 +9,11 @@ namespace TransactionService.Infrastructure.DI
     public static class ServiceCollectionExtensions
     {
 
-        public static ConnectionFactory AddRabbitMq(this IServiceCollection services)
+        public static ConnectionFactory AddRabbitMq(this IServiceCollection services, string host)
         {
             var factory = new ConnectionFactory
             {
-                HostName = "localhost",
+                HostName = host,
                 Port = 5671,
                 UserName = "guest",
                 Password = "guest",

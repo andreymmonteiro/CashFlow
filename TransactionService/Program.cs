@@ -27,7 +27,7 @@ public class Program
 
 
         var factory = builder.Services
-            .AddRabbitMq();
+            .AddRabbitMq(builder.Configuration["RabbitMq:Host"]);
 
         builder.Services
             .AddMongoDb()

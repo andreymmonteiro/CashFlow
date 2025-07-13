@@ -21,7 +21,7 @@ public class Program
         if (!builder.Environment.IsEnvironment("Testing"))
         {
             var factory = builder.Services
-                .AddRabbitMq();
+                .AddRabbitMq(builder.Configuration["RabbitMq:Host"]);
 
             builder.Services
                 .AddMongoDb()
