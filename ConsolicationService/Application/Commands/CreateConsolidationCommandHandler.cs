@@ -7,11 +7,9 @@ using ConsolicationService.Infrastructure.Projections;
 using ConsolicationService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
-using static EventStore.Client.StreamMessage;
 
 namespace ConsolicationService.Application.Commands
 {

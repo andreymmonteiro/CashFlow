@@ -61,9 +61,10 @@ services:
       - "7203:443"      # optional, if you need https dev cert
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      RabbitMq__HostName: rabbitmq
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
-      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: transaction
+      EventStoreDb__ConnectionString: esdb://eventstore:2113?tls=false
       RabbitMq__Host: rabbitmq
       ASPNETCORE_URLS: http://+:80;https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
@@ -85,9 +86,10 @@ services:
       - "7061:443"      # optional, if you need https dev cert
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      RabbitMq__HostName: rabbitmq
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
-      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: consolidation
+      EventStoreDb__ConnectionString: esdb://eventstore:2113?tls=false
       RabbitMq__Host: rabbitmq
       ASPNETCORE_URLS: http://+:80;https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
@@ -109,9 +111,10 @@ services:
       - "7219:443"      # optional, if you need https dev cert
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      RabbitMq__HostName: rabbitmq
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
-      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: balance
+      EventStoreDb__ConnectionString: esdb://eventstore:2113?tls=false
       RabbitMq__Host: rabbitmq
       ASPNETCORE_URLS: http://+:80;https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456

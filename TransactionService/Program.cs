@@ -1,7 +1,7 @@
-using System;
 using EventStore.Client;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Infrastructure.DI;
@@ -29,17 +29,40 @@ public class Program
         var factory = builder.Services
             .AddRabbitMq(builder.Configuration["RabbitMq:Host"]);
 
+        var mongoDbOptions = builder.Configuration.GetSection(MongoDbOptions.SectionName).Get<MongoDbOptions>();
+
         builder.Services
-            .AddMongoDb()
-            .AddEventStore();
+            .AddMongoDb(mongoDbOptions)
+            .AddEventStore(builder.Configuration["EventStoreDb:ConnectionString"]);
 
         if (!builder.Environment.IsEnvironment("Testing"))
         {
-            var connection = await factory.CreateConnectionAsync();
-            var channel = await connection.CreateChannelAsync();
+            var shouldRetry = true;
+            var retries = 0;
+
+            var brokerConnection = default(IConnection);
+
+            while (shouldRetry)
+            {
+                try
+                {
+                    var connection = await factory.CreateConnectionAsync();
+
+                    brokerConnection = connection;
+                    shouldRetry = false;
+                }
+                catch (BrokerUnreachableException e)
+                {
+                    retries++;
+
+                    shouldRetry = retries < 3;
+
+                    await Task.Delay(3000);
+                }
+            }
 
             // Register the initialized connection/channel into DI
-            builder.Services.AddSingleton(connection);
+            builder.Services.AddSingleton(brokerConnection);
 
         }
 

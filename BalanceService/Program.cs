@@ -7,6 +7,7 @@ using BalanceService.Presentation.Dtos.Request;
 using BalanceService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace BalanceService;
 
@@ -25,9 +26,11 @@ public class Program
             var factory = builder.Services
                 .AddRabbitMq(builder.Configuration["RabbitMq:Host"]);
 
+            var mongoDbOptions = builder.Configuration.GetSection(MongoDbOptions.SectionName).Get<MongoDbOptions>();
+
             builder.Services
-                .AddMongoDb()
-                .AddEventStore();
+                .AddMongoDb(mongoDbOptions)
+                .AddEventStore(builder.Configuration["EventStoreDb:ConnectionString"]);
 
             await RegisterChannels(factory);
         }
@@ -103,9 +106,31 @@ public class Program
 
         async Task RegisterChannels(ConnectionFactory factory)
         {
-            var connection = await factory.CreateConnectionAsync();
+            var shouldRetry = true;
+            var retries = 0;
 
-            builder.Services.AddSingleton(connection); 
+            var brokerConnection = default(IConnection);
+
+            while (shouldRetry)
+            {
+                try
+                {
+                    var connection = await factory.CreateConnectionAsync();
+
+                    brokerConnection = connection;
+                    shouldRetry = false;
+                }
+                catch (BrokerUnreachableException e)
+                {
+                    retries++;
+
+                    shouldRetry = retries < 3;
+
+                    await Task.Delay(3000);
+                }
+            }
+
+            builder.Services.AddSingleton(brokerConnection);
 
             builder.Services.AddScoped<ICreatedBalancePublisherChannel, CreatedBalancePublisherChannel>();
 

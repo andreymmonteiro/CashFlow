@@ -36,30 +36,30 @@ namespace BalanceService.Infrastructure.DI
             return factory;
         }
 
-        public static IServiceCollection AddMongoDb(this IServiceCollection services)
+        public static IServiceCollection AddMongoDb(this IServiceCollection services, MongoDbOptions mongoDbOptions)
         {
             services.AddSingleton<IMongoClient>(sp =>
             {
                 var settings = MongoClientSettings.FromConnectionString(
-                    "mongodb://root:1234@localhost:27018/?retryWrites=true");
+                    mongoDbOptions.ConnectionString);
                 return new MongoClient(settings);
             });
 
             services.AddScoped(sp =>
             {
                 var client = sp.GetRequiredService<IMongoClient>();
-                var db = client.GetDatabase("CashFlowDb");
-                return db.GetCollection<BalanceProjection>("balance");
+                var db = client.GetDatabase(mongoDbOptions.DatabaseName);
+                return db.GetCollection<BalanceProjection>(mongoDbOptions.CollectionName);
             });
 
             return services;
         }
 
-        public static IServiceCollection AddEventStore(this IServiceCollection services)
+        public static IServiceCollection AddEventStore(this IServiceCollection services, string connectionString)
         {
             services.AddSingleton(sp =>
             {
-                var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
+                var settings = EventStoreClientSettings.Create(connectionString);
                 return new EventStoreClient(settings);
             });
 
