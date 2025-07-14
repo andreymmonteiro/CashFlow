@@ -1,4 +1,6 @@
-﻿namespace AccountService.Presentation
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AccountService.Presentation
 {
-    public record class UserDto(string Username, string Email, string Password);
+    public record class UserDto(string Username,[EmailAddress] string Email, string Password);
 }
