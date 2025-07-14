@@ -19,7 +19,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\BalanceService\BalanceService.csproj" />
-		<ProjectReference Include="..\ConsolicationService\ConsolicationService.csproj" />
+		<ProjectReference Include="..\ConsolidationService\ConsolidationService.csproj" />
 		<ProjectReference Include="..\TransactionService\TransactionService.csproj" />
 	</ItemGroup>
 

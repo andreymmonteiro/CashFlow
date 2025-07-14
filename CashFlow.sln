@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionService", "TransactionService\TransactionService.csproj", "{B563489F-4D3D-4190-8217-9C795DD0CE7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsolicationService", "ConsolicationService\ConsolicationService.csproj", "{24612638-B781-454D-8B86-CBC86F00F290}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsolidationService", "ConsolidationService\ConsolidationService.csproj", "{24612638-B781-454D-8B86-CBC86F00F290}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalanceService", "BalanceService\BalanceService.csproj", "{FAB55F47-C6D0-420B-96A4-5F534B7B5B15}"
 EndProject

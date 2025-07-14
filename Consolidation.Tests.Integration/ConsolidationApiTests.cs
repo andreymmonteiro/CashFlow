@@ -1,10 +1,10 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using ConsolicationService;
-using ConsolicationService.Infrastructure.Messaging.Channels;
-using ConsolicationService.Infrastructure.Projections;
-using ConsolicationService.Presentation.Dtos.Request;
-using ConsolicationService.Presentation.Dtos.Response;
+using ConsolidationService;
+using ConsolidationService.Infrastructure.Messaging.Channels;
+using ConsolidationService.Infrastructure.Projections;
+using ConsolidationService.Presentation.Dtos.Request;
+using ConsolidationService.Presentation.Dtos.Response;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;

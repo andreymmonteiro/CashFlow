@@ -1,13 +1,13 @@
 ﻿using System.Reactive.Linq;
 using System.Text;
 using System.Text.Json;
-using ConsolicationService.Application.Commands;
-using ConsolicationService.Domain.Events;
-using ConsolicationService.Infrastructure.Messaging.Channels;
+using ConsolidationService.Application.Commands;
+using ConsolidationService.Domain.Events;
+using ConsolidationService.Infrastructure.Messaging.Channels;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace ConsolicationService.Infrastructure.Messaging.Consumers
+namespace ConsolidationService.Infrastructure.Messaging.Consumers
 {
     public sealed class CreatedTransactionConsumer : BackgroundService
     {

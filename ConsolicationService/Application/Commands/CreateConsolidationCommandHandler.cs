@@ -1,17 +1,17 @@
 ﻿using System.Text.Json;
-using ConsolicationService.Domain.Events;
-using ConsolicationService.Domain.ValueObjects;
-using ConsolicationService.Infrastructure.EventStore;
-using ConsolicationService.Infrastructure.Messaging.Channels;
-using ConsolicationService.Infrastructure.Projections;
-using ConsolicationService.Infrastructure.Utilities;
+using ConsolidationService.Domain.Events;
+using ConsolidationService.Domain.ValueObjects;
+using ConsolidationService.Infrastructure.EventStore;
+using ConsolidationService.Infrastructure.Messaging.Channels;
+using ConsolidationService.Infrastructure.Projections;
+using ConsolidationService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
 
-namespace ConsolicationService.Application.Commands
+namespace ConsolidationService.Application.Commands
 {
     public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolidationCommand, long>
     {

@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Balance.Tests.Unit.Common;
+﻿using Balance.Tests.Unit.Common;
 using BalanceService.Application.Commands;
-using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Projections;
@@ -14,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using NSubstitute;
 using RabbitMQ.Client;
-using Xunit;
 
 namespace Balance.Tests.Unit.Application.Commands;
 

@@ -1,6 +1,6 @@
-﻿using ConsolicationService.Infrastructure.Messaging.Channels;
+﻿using ConsolidationService.Infrastructure.Messaging.Channels;
 
-namespace ConsolicationService.Infrastructure.Messaging
+namespace ConsolidationService.Infrastructure.Messaging
 {
     public sealed class RabbitMqQueueInitializer(IRabbitMqQueueInitializerChannel rabbitMqQueueInitializerChannel) : IHostedService
     {

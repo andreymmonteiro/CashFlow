@@ -1,7 +1,7 @@
-﻿using ConsolicationService.Application.Commands;
-using ConsolicationService.Infrastructure.EventStore;
-using ConsolicationService.Infrastructure.Messaging.Channels;
-using ConsolicationService.Infrastructure.Projections;
+﻿using ConsolidationService.Application.Commands;
+using ConsolidationService.Infrastructure.EventStore;
+using ConsolidationService.Infrastructure.Messaging.Channels;
+using ConsolidationService.Infrastructure.Projections;
 using Consolidation.Tests.Unit.Common;
 using EventStore.Client;
 using Microsoft.Extensions.Logging;
