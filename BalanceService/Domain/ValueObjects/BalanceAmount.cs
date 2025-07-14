@@ -10,6 +10,6 @@
         public static implicit operator BalanceAmount((decimal debit, decimal credit) amounts)
             => new (amounts.debit, amounts.credit);
 
-        public decimal Amount => _value;
+        public static implicit operator decimal(BalanceAmount balanceAmount) => balanceAmount._value;
     }
 }

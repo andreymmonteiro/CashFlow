@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading;
+using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging.Channel;
@@ -38,7 +39,11 @@ namespace BalanceService.Application.Commands
                 Persistent = true
             };
 
-            var @event = (BalanceCreatedEvent)command;
+            var accountId = command.AccountId;
+
+            var balance = Balance.Create(command.AccountId, command.Amount);
+
+            var @event = balance.ToCreatedEvent();
 
             var date = command.Date;
 
@@ -55,7 +60,7 @@ namespace BalanceService.Application.Commands
 
                 await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 
-                var modifiedCount = await UpsertProjectionAsync(@event, streamId, cancellationToken);
+                var modifiedCount = await UpsertProjectionAsync(balance, accountId, streamId, cancellationToken);
 
                 var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
@@ -95,17 +100,17 @@ namespace BalanceService.Application.Commands
             }
         }
 
-        private async Task<long> UpsertProjectionAsync(BalanceCreatedEvent @event, string streamId, CancellationToken cancellationToken)
+        private async Task<long> UpsertProjectionAsync(Balance balance, string accountId, string streamId, CancellationToken cancellationToken)
         {
             var filter = Builders<BalanceProjection>.Filter.And(
-                Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, @event.AccountId),
+                Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, accountId),
                 Builders<BalanceProjection>.Filter.Not(
                     Builders<BalanceProjection>.Filter.AnyEq(c => c.AppliedStreamIds, streamId))
             );
 
             var update = Builders<BalanceProjection>.Update
-                 .SetOnInsert(c => c.AccountId, @event.AccountId)
-                 .Inc(c => c.Amount, @event.Amount)
+                 .SetOnInsert(c => c.AccountId, accountId)
+                 .Inc(c => c.Amount, balance.Amount)
                  .Push(c => c.AppliedStreamIds, streamId);
 
             var options = new UpdateOptions { IsUpsert = false };
@@ -114,7 +119,7 @@ namespace BalanceService.Application.Commands
             if (upsertResult.ModifiedCount == 0)
             {
                 var documentFilter = Builders<BalanceProjection>.Filter.And(
-                    Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, @event.AccountId));
+                    Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, accountId));
 
                 var count = await _balances.CountDocumentsAsync(documentFilter, cancellationToken: cancellationToken);
 
@@ -130,8 +135,8 @@ namespace BalanceService.Application.Commands
 
                 var projection = new BalanceProjection
                 {
-                    AccountId = @event.AccountId,
-                    Amount = @event.Amount,
+                    AccountId = accountId,
+                    Amount = balance.Amount,
                     AppliedStreamIds = new List<string> { streamId }
                 };
 

@@ -1,4 +1,4 @@
-﻿namespace ConsolidationService.Infrastructure.DI
+﻿namespace TransactionService.Infrastructure.Options
 {
     public class MongoDbOptions
     {

@@ -1,4 +1,5 @@
 using AccountService.Infrastructure;
+using AccountService.Infrastructure.Options;
 using AccountService.Infrastructure.Projections;
 using AccountService.Infrastructure.Security;
 using AccountService.Presentation;
@@ -14,18 +15,19 @@ builder.Services.AddSwaggerGen();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+var mongoDbOptions = builder.Configuration.GetSection(MongoDbOptions.SectionName).Get<MongoDbOptions>();
+
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
-    var settings = MongoClientSettings.FromConnectionString(
-        "mongodb://root:1234@localhost:27018/?retryWrites=true");
+    var settings = MongoClientSettings.FromConnectionString(mongoDbOptions.ConnectionString);
     return new MongoClient(settings);
 });
 
 builder.Services.AddScoped(sp =>
 {
     var client = sp.GetRequiredService<IMongoClient>();
-    var db = client.GetDatabase("CashFlowDb");
-    return db.GetCollection<UserProjection>("user");
+    var db = client.GetDatabase(mongoDbOptions.DatabaseName);
+    return db.GetCollection<UserProjection>(mongoDbOptions.CollectionName);
 });
 
 

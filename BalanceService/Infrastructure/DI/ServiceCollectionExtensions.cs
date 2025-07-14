@@ -1,5 +1,6 @@
 ﻿using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging;
+using BalanceService.Infrastructure.Options;
 using BalanceService.Infrastructure.Projections;
 using EventStore.Client;
 using MongoDB.Driver;

@@ -2,6 +2,7 @@
 using MongoDB.Driver;
 using RabbitMQ.Client;
 using TransactionService.Infrastructure.EventStore;
+using TransactionService.Infrastructure.Options;
 using TransactionService.Infrastructure.Projections;
 
 namespace TransactionService.Infrastructure.DI

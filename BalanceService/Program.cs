@@ -3,6 +3,7 @@ using BalanceService.Application.Queries;
 using BalanceService.Infrastructure.DI;
 using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Messaging.Consumers;
+using BalanceService.Infrastructure.Options;
 using BalanceService.Presentation.Dtos.Request;
 using BalanceService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;

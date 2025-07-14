@@ -1,5 +1,6 @@
 ﻿using ConsolidationService.Infrastructure.EventStore;
 using ConsolidationService.Infrastructure.Messaging;
+using ConsolidationService.Infrastructure.Options;
 using ConsolidationService.Infrastructure.Projections;
 using EventStore.Client;
 using MongoDB.Driver;

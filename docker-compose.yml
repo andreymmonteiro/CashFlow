@@ -136,10 +136,7 @@ services:
       - "7071:443"      # optional, if you need https dev cert
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      RabbitMq__HostName: rabbitmq
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
-      EventStore__ConnectionString: esdb://eventstore:2113?tls=false
-      RabbitMq__Host: rabbitmq
       ASPNETCORE_URLS: http://+:80;https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
       ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx

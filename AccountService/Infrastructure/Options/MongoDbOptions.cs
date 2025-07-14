@@ -1,4 +1,4 @@
-﻿namespace TransactionService.Infrastructure.DI
+﻿namespace AccountService.Infrastructure.Options
 {
     public class MongoDbOptions
     {

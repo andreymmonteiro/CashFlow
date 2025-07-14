@@ -3,6 +3,7 @@ using ConsolidationService.Application.Queries;
 using ConsolidationService.Infrastructure.DI;
 using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
+using ConsolidationService.Infrastructure.Options;
 using ConsolidationService.Presentation.Dtos.Request;
 using ConsolidationService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;

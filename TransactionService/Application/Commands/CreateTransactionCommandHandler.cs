@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using EventStore.Client;
 using Grpc.Core;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
+using TransactionService.Domain.Aggregates;
 using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.EventStore;
 using TransactionService.Infrastructure.Projections;
@@ -36,13 +36,17 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
     {
         using var channel = await _connection.CreateChannelAsync();
 
-        var @event = (TransactionCreatedEvent)command;
+        var transaction = Transaction.Create(
+            command.AccountId,
+            command.Amount);
 
-        var accountId = @event.AccountId.ToString();
+        var @event = transaction.ToCreatedEvent();
 
-        var transactionId = @event.TransactionId.ToString();
+        var accountId = transaction.AccountId.ToString();
 
-        var id = DeterministicId.For(accountId, @event.CreatedAt);
+        var transactionId = transaction.TransactionId.ToString();
+
+        var id = DeterministicId.For(accountId, transaction.CreatedAt);
 
         var streamId = id.ToString();
 
@@ -88,7 +92,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 });
 
             // Idempotent projection write
-            var projection = new TransactionProjection(@event.TransactionId.ToString(), accountId, command.Amount, @event.CreatedAt);
+            var projection = new TransactionProjection(transaction.TransactionId.ToString(), accountId, transaction.Amount, transaction.CreatedAt);
 
             var filter = Builders<TransactionProjection>.Filter.And(
                 Builders<TransactionProjection>.Filter.Eq(c => c.AccountId, accountId),

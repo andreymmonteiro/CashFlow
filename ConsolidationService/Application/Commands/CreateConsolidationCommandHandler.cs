@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
+using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
-using ConsolidationService.Domain.ValueObjects;
 using ConsolidationService.Infrastructure.EventStore;
 using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
@@ -35,7 +35,9 @@ namespace ConsolidationService.Application.Commands
                 Persistent = true
             };
 
-            var @event = (ConsolidationCreatedEvent)command;
+            var consolidation = Consolidation.Create(command.AccountId, command.Amount, command.CreatedAt);
+
+            var @event = consolidation.ToCreatedEvent();
 
             var accountId = command.AccountId;
 
@@ -56,7 +58,7 @@ namespace ConsolidationService.Application.Commands
 
                 await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 
-                var modifiedCount = await UpsertProjectionAsync(command, streamId, cancellationToken);
+                var modifiedCount = await UpsertProjectionAsync(accountId, consolidation, streamId, cancellationToken);
 
                 var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
@@ -96,23 +98,21 @@ namespace ConsolidationService.Application.Commands
             }
         }
 
-        private async Task<long> UpsertProjectionAsync(CreateConsolidationCommand command, string streamId, CancellationToken cancellationToken)
+        private async Task<long> UpsertProjectionAsync(string accountId, Consolidation consolidation, string streamId, CancellationToken cancellationToken)
         {
             var filter = Builders<ConsolidationProjection>.Filter.And(
-                Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
-                Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date),
+                Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, accountId),
+                Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, consolidation.Date.Date),
                 Builders<ConsolidationProjection>.Filter.Not(
                     Builders<ConsolidationProjection>.Filter.AnyEq(c => c.AppliedStreamIds, streamId))
             );
 
-            ConsolidationAmount consolidationAmount = command.Amount;
-
             var update = Builders<ConsolidationProjection>.Update
-                .SetOnInsert(c => c.AccountId, command.AccountId)
-                .SetOnInsert(c => c.Date, command.CreatedAt.Date)
-                .SetOnInsert(c => c.TotalAmount, consolidationAmount.TotalAmount)
-                .Inc(c => c.TotalDebits, consolidationAmount.Debit)
-                .Inc(c => c.TotalCredits, consolidationAmount.Credit)
+                .SetOnInsert(c => c.AccountId, accountId)
+                .SetOnInsert(c => c.Date, consolidation.Date.Date)
+                .SetOnInsert(c => c.TotalAmount, consolidation.Amount.TotalAmount)
+                .Inc(c => c.TotalDebits, consolidation.Amount.Debit)
+                .Inc(c => c.TotalCredits, consolidation.Amount.Credit)
                 .AddToSet(c => c.AppliedStreamIds, streamId);
 
             
@@ -124,8 +124,8 @@ namespace ConsolidationService.Application.Commands
 
                 var documentFilter = 
                     Builders<ConsolidationProjection>.Filter.And(
-                        Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, command.AccountId),
-                        Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, command.CreatedAt.Date));
+                        Builders<ConsolidationProjection>.Filter.Eq(c => c.AccountId, accountId),
+                        Builders<ConsolidationProjection>.Filter.Eq(c => c.Date, consolidation.Date.Date));
 
                 var count = await _consolidations.CountDocumentsAsync(documentFilter, cancellationToken: cancellationToken);
 
@@ -136,11 +136,11 @@ namespace ConsolidationService.Application.Commands
 
                 var projection = new ConsolidationProjection()
                 {
-                    AccountId = command.AccountId,
-                    Date = command.CreatedAt.Date,
-                    TotalAmount = consolidationAmount.TotalAmount,
-                    TotalDebits = consolidationAmount.Debit,
-                    TotalCredits = consolidationAmount.Credit,
+                    AccountId = accountId,
+                    Date = consolidation.Date.Date,
+                    TotalAmount = consolidation.Amount.TotalAmount,
+                    TotalDebits = consolidation.Amount.Debit,
+                    TotalCredits = consolidation.Amount.Credit,
                     AppliedStreamIds = new List<string> { streamId }
                 };
 

@@ -6,6 +6,7 @@ using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Infrastructure.DI;
 using TransactionService.Infrastructure.Messaging.Consumers;
+using TransactionService.Infrastructure.Options;
 using TransactionService.Presentation.Dtos.Request;
 using TransactionService.Presentation.Dtos.Response;
 
@@ -83,30 +84,37 @@ public class Program
 
                 var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
 
-                if (exception is BadHttpRequestException badHttpRequest)
+                object message;
+
+                switch (exception)
                 {
-                    // handle bad HTTP request
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    await context.Response.WriteAsJsonAsync(new
-                    {
-                        Message = $"Bad request: {badHttpRequest?.InnerException?.Message ?? badHttpRequest?.Message}"
-                    });
-                    return;
+                    case InvalidOperationException:
+                    case BadHttpRequestException:
+                        {
+                            // handle bad HTTP request
+                            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                            message = new
+                            {
+                                Message = $"Bad request: {exception?.InnerException?.Message ?? exception?.Message}"
+                            };
+                            break;
+                        }
+                    default:
+                        {
+                            logger.LogError(exception, "An unhandled exception occurred.");
+
+                            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                            context.Response.ContentType = "application/json";
+
+                            message = new
+                            {
+                                Message = "An unexpected error occurred. Please try again later."
+                            };
+                            break;
+                        }
                 }
 
-                logger.LogError(exception, "An unhandled exception occurred.");
-
-                //if (exception.Stat)
-
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                context.Response.ContentType = "application/json";
-
-                var errorResponse = new
-                {
-                    Message = "An unexpected error occurred. Please try again later."
-                };
-
-                await context.Response.WriteAsJsonAsync(errorResponse);
+                await context.Response.WriteAsJsonAsync(message);
             };
         });
 

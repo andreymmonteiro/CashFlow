@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using BalanceService.Application.Commands;
+using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.Messaging.Channel;
 using RabbitMQ.Client;
@@ -53,7 +54,9 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 
                 var commandHandler = await GetCommandHandler();
 
-                await commandHandler.HandleAsync((CreateBalanceCommand)evt, stoppingToken);
+                var command = Balance.CreateCommand(evt.AccountId, evt.Debit, evt.Credit, evt.Date);
+
+                await commandHandler.HandleAsync(command, stoppingToken);
 
                 await channel.BasicAckAsync(deliveryTag, false);
             },

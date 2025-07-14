@@ -1,4 +1,4 @@
-﻿namespace BalanceService.Infrastructure.DI
+﻿namespace BalanceService.Infrastructure.Options
 {
     public class MongoDbOptions
     {

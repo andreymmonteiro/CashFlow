@@ -2,8 +2,10 @@
 using System.Text;
 using System.Text.Json;
 using ConsolidationService.Application.Commands;
+using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.Messaging.Channels;
+using Microsoft.AspNetCore.Mvc;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -53,7 +55,9 @@ namespace ConsolidationService.Infrastructure.Messaging.Consumers
 
                 var commandHandler = await GetCommandHandler();
 
-                await commandHandler.HandleAsync((CreateConsolidationCommand)evt, stoppingToken);
+                var command = Consolidation.CreateCommand(evt.AccountId, evt.Amount, evt.CreatedAt);
+
+                await commandHandler.HandleAsync(command, stoppingToken);
 
                 await channel.BasicAckAsync(deliveryTag, false);
             },
