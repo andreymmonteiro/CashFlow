@@ -131,7 +131,7 @@ docker compose up -d
 - HTTPS: https://localhost:7219/Swagger
 - HTTP: http://localhost:5070/Swagger
 
-## Perform non functional tests
+## Non-Functional Testing
 
 ### Navigate to the load test folder
 
