@@ -106,6 +106,26 @@ cd CashFlow
 docker compose up -d
 ```
 
+### Account Service
+
+- HTTPS: https://localhost:7071/Swagger
+- HTTP: http://localhost:5020/Swagger
+
+### Transaction Service
+
+- HTTPS: https://localhost:7203/Swagger
+- HTTP: http://localhost:5106/Swagger
+
+### Consolidation Service
+
+- HTTPS: https://localhost:7061/Swagger
+- HTTP: http://localhost:5010/Swagger
+
+## Balance Service
+
+- HTTPS: https://localhost:7219/Swagger
+- HTTP: http://localhost:5070/Swagger
+
 ### System Context
 
 ![System Context](c4_systemcontext_cahsflow.png)
