@@ -29,7 +29,7 @@ public class IntegrationTests : IClassFixture<TransactionApiFactory>, IClassFixt
         transactionResponse.EnsureSuccessStatusCode();
 
         // If becomes intermittent, you can increase the delay
-        await Task.Delay(500); // Wait for the transaction to be processed
+        await Task.Delay(1000); // Wait for the transaction to be processed
 
         var balanceResponse = await _balanceClient.GetAsync($"api/balance?accountId={command.AccountId}");
         balanceResponse.EnsureSuccessStatusCode();

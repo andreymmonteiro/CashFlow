@@ -1,6 +1,0 @@
-@ConsolicationService_HostAddress = http://localhost:5015
-
-GET {{ConsolicationService_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
