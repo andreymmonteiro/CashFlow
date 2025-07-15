@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConsolidationService\ConsolidationService.csproj" />
+    <ProjectReference Include="..\..\ConsolidationService\ConsolidationService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

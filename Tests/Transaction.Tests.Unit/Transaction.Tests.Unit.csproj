@@ -18,7 +18,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\BalanceService\BalanceService.csproj" />
+	  <ProjectReference Include="..\..\TransactionService\TransactionService.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

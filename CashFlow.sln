@@ -11,19 +11,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalanceService", "BalanceSe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transaction.Tests.Integration", "Transaction.Tests.Integration\Transaction.Tests.Integration.csproj", "{D3F4DB1D-9DC5-4C0B-A4AF-2E1C36224FDB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transaction.Tests.Integration", "Tests\Transaction.Tests.Integration\Transaction.Tests.Integration.csproj", "{D3F4DB1D-9DC5-4C0B-A4AF-2E1C36224FDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consolidation.Tests.Integration", "Consolidation.Tests.Integration\Consolidation.Tests.Integration.csproj", "{063D4922-1C27-4136-904B-D04704865BDE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consolidation.Tests.Integration", "Tests\Consolidation.Tests.Integration\Consolidation.Tests.Integration.csproj", "{063D4922-1C27-4136-904B-D04704865BDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Balance.Tests.Integration", "Balance.Tests.Integration\Balance.Tests.Integration.csproj", "{AA85DB25-C546-4BFE-AE50-1B5FB11FA416}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Balance.Tests.Integration", "Tests\Balance.Tests.Integration\Balance.Tests.Integration.csproj", "{AA85DB25-C546-4BFE-AE50-1B5FB11FA416}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transaction.Tests.Unit", "Transaction.Tests.Unit\Transaction.Tests.Unit.csproj", "{66844C58-0967-4BCD-A58E-A774F60FF615}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transaction.Tests.Unit", "Tests\Transaction.Tests.Unit\Transaction.Tests.Unit.csproj", "{66844C58-0967-4BCD-A58E-A774F60FF615}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Balance.Tests.Unit", "Balance.Tests.Unit\Balance.Tests.Unit.csproj", "{09E2107A-B140-4903-B309-E0FA6A7448F0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Balance.Tests.Unit", "Tests\Balance.Tests.Unit\Balance.Tests.Unit.csproj", "{09E2107A-B140-4903-B309-E0FA6A7448F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consolidation.Tests.Unit", "Consolidation.Tests.Unit\Consolidation.Tests.Unit.csproj", "{0DA486D0-725F-415B-80D7-8318BDE35A7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consolidation.Tests.Unit", "Tests\Consolidation.Tests.Unit\Consolidation.Tests.Unit.csproj", "{0DA486D0-725F-415B-80D7-8318BDE35A7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Integration.FunctionalTests", "Integration.FunctionalTests\Integration.FunctionalTests.csproj", "{2CE97693-71DB-4413-9D0A-747F6F84BC7B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Integration.FunctionalTests", "Tests\Integration.FunctionalTests\Integration.FunctionalTests.csproj", "{2CE97693-71DB-4413-9D0A-747F6F84BC7B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountService", "AccountService\AccountService.csproj", "{0FAE41BB-02BE-4E00-9A3F-03E8C6F492D6}"
 EndProject
