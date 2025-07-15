@@ -103,7 +103,7 @@ cd CashFlow
 
 ### Create Network
 ```bash
-docker network rm cashflow-net
+docker network create cashflow-net
 ```
 
 ### Run locally
@@ -130,6 +130,19 @@ docker compose up -d
 
 - HTTPS: https://localhost:7219/Swagger
 - HTTP: http://localhost:5070/Swagger
+
+## Perform non functional tests
+
+### Navigate to the load test folder
+
+```bash
+cd Tests\NonFunctional.Tests.Load
+```
+### Run
+
+```bash
+docker compose up
+```
 
 ### System Context
 
