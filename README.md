@@ -99,6 +99,10 @@ cd CashFlow
 docker compose up -d
 ```
 
+### System Context
+
+![System Context](c4_systemcontext_cahsflow.png)
+
 ### Container Context
 
 ![Container Context](c4_containercontext_cahsflow.png)
