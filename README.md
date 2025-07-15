@@ -22,6 +22,8 @@ All operations are designed to be **idempotent**, **deterministic**, and fault-t
   - `TransactionService`: Records debit/credit transactions.
   - `ConsolidationService`: Generates daily consolidations based on transactions.
   - `BalanceService`: Computes and provides the current balance.
+- **Saga Pattern:**
+  - Uses Choreography-based Saga to manage distributed transactions across microservices, ensuring failure handling and rollback without a centralized orchestrator.
 - **API Gateway:**
   - Built with **Kong**, acts as a reverse proxy and enforces authentication.
 - **Message Broker:**
@@ -35,6 +37,9 @@ All operations are designed to be **idempotent**, **deterministic**, and fault-t
     - Balance by AccountId
 - **Bounded Contexts:**
   - Each microservice represents a **bounded context**, fully owning its data and logic.
+- **Containerization & Orchestration:**
+  - Each microservice runs inside its own Docker container.
+  - Containers are orchestrated by Kubernetes, enabling horizontal and vertical scaling based on demand, ensuring high availability and efficient resource utilization.
 
 The system ensures that **Transaction Service remains operational even if Consolidation Service becomes unavailable**, supporting the business requirement of service independence.
 
@@ -43,10 +48,10 @@ The system ensures that **Transaction Service remains operational even if Consol
 ## 📊 Observability & Monitoring (Cost-Effective Open Source Stack)
 For observability and monitoring, the following open-source tools are recommended:
 
-- **SDK or Sidecar:** OpenTelemetry (for metrics, traces, and logs instrumentation)
+- **Sidecar:** OpenTelemetry (for metrics, traces, and logs instrumentation)
 - **Metrics Backend:** Prometheus + Grafana (for scraping, storing, and visualizing metrics)
 - **Distributed Tracing:** Jaeger (for tracing request flows across services)
-- **Logging:** ELK Stack (Elasticsearch, Logstash, Kibana) or Loki (lightweight log aggregation)
+- **Logging:** Elasticsearch acts as the storage and search engine where logs and other telemetry data are indexed and stored. Kibana is the visualization and dashboard tool that connects to Elasticsearch to display, explore, and analyze those logs and telemetry data.
 
 ---
 
@@ -78,10 +83,22 @@ For observability and monitoring, the following open-source tools are recommende
 
 ### Prerequisites
 - Docker & Docker Compose installed
-- **.NET 8 SDK and Runtime installed** (required to build and run the .NET services locally)
+
+### Clone repository
+```bash
+git clone https://github.com/andreymmonteiro/CashFlow.git
+```
+
+### Navigate to the project folder
+```bash
+cd CashFlow
+```
 
 ### Run locally
 ```bash
 docker compose up -d
+```
+
+### Container Context
 
 ![Container Context](c4_containercontext_cahsflow.png)
