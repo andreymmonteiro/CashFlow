@@ -15,6 +15,13 @@ All operations are designed to be **idempotent**, **deterministic**, and fault-t
 
 ---
 
+---
+
+## 🏛️ Architecture Decisions
+
+For detailed rationale, alternatives considered, and trade-offs behind key architectural choices — including microservices, RabbitMQ messaging, event sourcing, API Gateway, containerization, and observability — please refer to the [Architecture Decision Records (ADRs)](./Docs/ADR/ADR-001.md).
+
+
 ## 🧩 Architecture
 - **Pattern:** Event-Driven Architecture (EDA) with **CQRS** and **Event Sourcing**
 - **Microservices:**
