@@ -2,7 +2,6 @@
 using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.EventStore;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
 using ConsolidationService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -16,14 +15,14 @@ namespace ConsolidationService.Application.Commands
     public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolidationCommand, long>
     {
         private readonly IEventStoreWrapper _eventStore;
-        private readonly ICreatedConsolidationPublisherChannel _channel;
         private readonly IMongoCollection<ConsolidationProjection> _consolidations;
         private readonly ILogger<CreateConsolidationCommandHandler> _logger;
+        private readonly IConnection _connection;
 
-        public CreateConsolidationCommandHandler(IEventStoreWrapper eventStore, ICreatedConsolidationPublisherChannel channel, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
+        public CreateConsolidationCommandHandler(IEventStoreWrapper eventStore, IConnection connection, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
         {
             _eventStore = eventStore;
-            _channel = channel;
+            _connection = connection;
             _consolidations = consolidations;
             _logger = logger;
         }
@@ -45,7 +44,7 @@ namespace ConsolidationService.Application.Commands
 
             var eventId = Uuid.FromGuid(id);
 
-            var channel = await _channel.CreateChannelAsync();
+            using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync("consolidation.created", durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
 
@@ -54,7 +53,7 @@ namespace ConsolidationService.Application.Commands
             try
             {
                 _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
-                    command.AccountId, command.Amount, command.CreatedAt);                
+                    command.AccountId, command.Amount, command.CreatedAt);
 
                 await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 
@@ -74,7 +73,7 @@ namespace ConsolidationService.Application.Commands
 
                 return modifiedCount;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _logger.LogError(e, "Error handling CreateConsolidationCommand for AccountId: {AccountId}", command.AccountId);
 
@@ -95,6 +94,13 @@ namespace ConsolidationService.Application.Commands
                     body: dlqBody);
 
                 return 0;
+            }
+            finally
+            {
+                if (channel is { IsOpen: true })
+                {
+                    await channel.CloseAsync();
+                }
             }
         }
 

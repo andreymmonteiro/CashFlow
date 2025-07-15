@@ -1,7 +1,6 @@
 using BalanceService.Application.Commands;
 using BalanceService.Application.Queries;
 using BalanceService.Infrastructure.DI;
-using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Messaging.Consumers;
 using BalanceService.Infrastructure.Options;
 using BalanceService.Presentation.Dtos.Request;
@@ -33,7 +32,7 @@ public class Program
                 .AddMongoDb(mongoDbOptions)
                 .AddEventStore(builder.Configuration["EventStoreDb:ConnectionString"]);
 
-            await RegisterChannels(factory);
+            await RegisterConnection(factory);
         }
 
         builder.Services.AddHostedService<CreatedConsolidationConsumer>();
@@ -105,7 +104,7 @@ public class Program
 
         await app.RunAsync();
 
-        async Task RegisterChannels(ConnectionFactory factory)
+        async Task RegisterConnection(ConnectionFactory factory)
         {
             var shouldRetry = true;
             var retries = 0;
@@ -132,12 +131,6 @@ public class Program
             }
 
             builder.Services.AddSingleton(brokerConnection);
-
-            builder.Services.AddScoped<ICreatedBalancePublisherChannel, CreatedBalancePublisherChannel>();
-
-            builder.Services.AddSingleton<ICreatedConsolidationConsumerChannel, CreatedConsolidationConsumerChannel>();
-
-            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel, RabbitMqQueueInitializerChannel>();
         }
     }
 }

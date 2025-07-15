@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using ConsolidationService;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
 using ConsolidationService.Presentation.Dtos.Request;
 using ConsolidationService.Presentation.Dtos.Response;
@@ -42,24 +41,12 @@ namespace Consolidation.Tests.Integration
 
                     services.AddSingleton(collection);
 
-                    var createdTransactionConsumerChannel = Substitute.For<ICreatedTransactionConsumerChannel>();
+                    var connection = Substitute.For<IConnection>();
 
-                    createdTransactionConsumerChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
+                    var connectionFactory = Substitute.For<IConnectionFactory>();
 
-                    var createdConsolidationPublisherChannel = Substitute.For<ICreatedConsolidationPublisherChannel>();
-
-                    createdConsolidationPublisherChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
-
-                    var rabbitMqQueueInitializerChannel = Substitute.For<IRabbitMqQueueInitializerChannel>();
-
-                    rabbitMqQueueInitializerChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
-
-                    services.AddSingleton(createdConsolidationPublisherChannel);
-                    services.AddSingleton(rabbitMqQueueInitializerChannel);
-                    services.AddSingleton(createdTransactionConsumerChannel);
+                    services.AddSingleton(connection);
+                    services.AddSingleton(connectionFactory);
 
                 });
 

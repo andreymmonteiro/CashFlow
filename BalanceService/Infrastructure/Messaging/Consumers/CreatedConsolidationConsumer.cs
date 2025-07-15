@@ -4,7 +4,6 @@ using System.Text.Json;
 using BalanceService.Application.Commands;
 using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
-using BalanceService.Infrastructure.Messaging.Channel;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -12,15 +11,22 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 {
     public sealed class CreatedConsolidationConsumer : BackgroundService
     {
-        private readonly ICreatedConsolidationConsumerChannel _consumerChannel;
+        private readonly IConnectionFactory _factory;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<CreatedConsolidationConsumer> _logger;
 
-        public CreatedConsolidationConsumer(ICreatedConsolidationConsumerChannel consumerChannel, IServiceProvider serviceProvider, ILogger<CreatedConsolidationConsumer> logger)
+        private IConnection _connection;
+        private IChannel _channel;
+        private SemaphoreSlim _semaphore;
+
+        private readonly int maxDegreeOfParallelism = 500; // Set the maximum degree of parallelism for processing messages
+
+        public CreatedConsolidationConsumer(IConnectionFactory factory, IServiceProvider serviceProvider, ILogger<CreatedConsolidationConsumer> logger)
         {
-            _consumerChannel = consumerChannel;
+            _factory = factory;
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -30,9 +36,11 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var channel = await _consumerChannel.CreateChannelAsync();
+            _connection = await _factory.CreateConnectionAsync(cancellationToken: stoppingToken);
 
-            var consumer = new AsyncEventingBasicConsumer(channel);
+            _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+            var consumer = new AsyncEventingBasicConsumer(_channel);
 
             // Use Observable.FromEvent instead of Observable.FromEventPattern to handle the event subscription correctly
             var observable = Observable.FromEvent<AsyncEventHandler<BasicDeliverEventArgs>, BasicDeliverEventArgs>(
@@ -48,27 +56,44 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
 
             observable.Subscribe(async tuple =>
             {
-                var (evt, deliveryTag) = tuple;
+                await _semaphore.WaitAsync(stoppingToken);
 
-                if (stoppingToken.IsCancellationRequested) return;
+                try
+                {
+                    var (evt, deliveryTag) = tuple;
 
-                var commandHandler = await GetCommandHandler();
+                    if (stoppingToken.IsCancellationRequested) return;
 
-                var command = Balance.CreateCommand(evt.AccountId, evt.Debit, evt.Credit, evt.Date);
+                    var commandHandler = await GetCommandHandler();
 
-                await commandHandler.HandleAsync(command, stoppingToken);
+                    var command = Balance.CreateCommand(evt.AccountId, evt.Debit, evt.Credit, evt.Date);
 
-                await channel.BasicAckAsync(deliveryTag, false);
+                    await commandHandler.HandleAsync(command, stoppingToken);
+
+                    await _channel.BasicAckAsync(deliveryTag, false);
+                }
+                finally
+                {
+                    _semaphore.Release();
+                }
             },
 
             ex => _logger.LogError(ex, "Error in consumer"),
             stoppingToken);
 
-            await channel.BasicConsumeAsync("consolidation.created", autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+            await _channel.BasicConsumeAsync("consolidation.created", autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
+            _channel?.DisposeAsync();
+            _connection?.DisposeAsync();
+            _semaphore?.Dispose();
+
+            _channel = null;
+            _connection = null;
+            _semaphore = null;
+
             await base.StopAsync(cancellationToken);
         }
 

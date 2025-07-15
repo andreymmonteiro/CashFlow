@@ -1,12 +1,12 @@
-﻿using BalanceService.Infrastructure.Messaging.Channel;
+﻿using RabbitMQ.Client;
 
 namespace BalanceService.Infrastructure.Messaging
 {
-    public sealed class RabbitMqQueueInitializer(IRabbitMqQueueInitializerChannel rabbitMqQueueInitializerChannel) : IHostedService
+    public sealed class RabbitMqQueueInitializer(IConnection Connection) : IHostedService
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var channel = await rabbitMqQueueInitializerChannel.CreateChannelAsync();
+            using var channel = await Connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
                 queue: "consolidation.created",

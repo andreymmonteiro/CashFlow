@@ -8,6 +8,8 @@ services:
       - "5672:5672"     # AMQP (non-TLS)
       - "5671:5671"     # AMQP over TLS
       - "15672:15672"   # Management UI
+    networks:
+      - cashflow-net
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -20,6 +22,8 @@ services:
     container_name: mongodbStandalone
     ports:
       - "27018:27017"
+    networks:
+      - cashflow-net
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 1234
@@ -37,6 +41,8 @@ services:
     ports:
       - "1113:1113"   # TCP for legacy client protocol
       - "2113:2113"   # HTTP + gRPC endpoint
+    networks:
+      - cashflow-net
     restart: unless-stopped
 
   mongo-express:
@@ -44,6 +50,8 @@ services:
     container_name: mongo-express
     ports:
       - "8081:8081"
+    networks:
+      - cashflow-net
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: 1234
@@ -59,6 +67,8 @@ services:
     ports:
       - "5106:80"       # inside container runs on 80, map to 5106
       - "7203:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
@@ -78,12 +88,14 @@ services:
 
   consolidationservice:
     build:
-      context: ./ConsolicationService
+      context: ./ConsolidationService
       dockerfile: Dockerfile
     container_name: consolidationservice
     ports:
       - "5010:80"       # inside container runs on 80, map to 5106
       - "7061:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
@@ -109,6 +121,8 @@ services:
     ports:
       - "5070:80"       # inside container runs on 80, map to 5106
       - "7219:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
@@ -134,6 +148,8 @@ services:
     ports:
       - "5020:80"       # inside container runs on 80, map to 5106
       - "7071:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       MongoDb__ConnectionString: mongodb://root:1234@mongodbStandalone:27017
@@ -147,3 +163,7 @@ services:
 
 volumes:
   db_data:
+
+networks:
+  cashflow-net:
+    external: true

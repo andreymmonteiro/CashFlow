@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  k6:
+    image: grafana/k6:latest
+    networks:
+      - cashflow-net
+    volumes:
+      - ./load-test.js:/load-test.js
+      - ./results:/results
+    command: >
+      run /load-test.js
+      --summary-export=/results/summary.json
+
+networks:
+  cashflow-net:
+    external: true      

@@ -1,10 +1,7 @@
-﻿using System.Linq.Expressions;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using BalanceService;
-using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Projections;
-using BalanceService.Presentation.Dtos.Request;
 using BalanceService.Presentation.Dtos.Response;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
@@ -43,24 +40,12 @@ namespace Balance.Tests.Integration
 
                     services.AddSingleton(collection);
 
-                    var createdBalancePublisherChannel = Substitute.For<ICreatedBalancePublisherChannel>();
+                    var connection = Substitute.For<IConnection>();
 
-                    createdBalancePublisherChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
+                    var connectionFactory = Substitute.For<IConnectionFactory>();
 
-                    var createdConsolidationConsumerChannel = Substitute.For<ICreatedConsolidationConsumerChannel>();
-
-                    createdConsolidationConsumerChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
-
-                    var rabbitMqQueueInitializerChannel = Substitute.For<IRabbitMqQueueInitializerChannel>();
-
-                    rabbitMqQueueInitializerChannel.CreateChannelAsync()
-                        .Returns(Substitute.For<IChannel>());
-
-                    services.AddSingleton(createdBalancePublisherChannel);
-                    services.AddSingleton(createdConsolidationConsumerChannel);
-                    services.AddSingleton(rabbitMqQueueInitializerChannel);
+                    services.AddSingleton(connection);
+                    services.AddSingleton(connectionFactory);
 
                 });
 

@@ -165,7 +165,7 @@ public class Program
             {
                 var eventType = @event.Event.EventType;
 
-                if (eventType.StartsWith("$") && @event.Event.EventStreamId.StartsWith("transaction-"))
+                if (eventType.StartsWith("$") || @event.Event.EventStreamId.StartsWith("consolidation-") || @event.Event.EventStreamId.StartsWith("balance-"))
                 {
                     Console.WriteLine($"System event: {eventType}");
                     continue;

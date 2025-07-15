@@ -101,6 +101,11 @@ git clone https://github.com/andreymmonteiro/CashFlow.git
 cd CashFlow
 ```
 
+### Create Network
+```bash
+docker network rm cashflow-net
+```
+
 ### Run locally
 ```bash
 docker compose up -d

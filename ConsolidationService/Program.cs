@@ -1,7 +1,6 @@
 using ConsolidationService.Application.Commands;
 using ConsolidationService.Application.Queries;
 using ConsolidationService.Infrastructure.DI;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
 using ConsolidationService.Infrastructure.Options;
 using ConsolidationService.Presentation.Dtos.Request;
@@ -31,7 +30,7 @@ public class Program
                 .AddMongoDb(mongoDbOptions)
                 .AddEventStore(builder.Configuration["EventStoreDb:ConnectionString"]);
 
-            await RegisterChannels(factory);
+            await RegisterConnection(factory);
         }
 
         builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand, long>, CreateConsolidationCommandHandler>();
@@ -104,7 +103,7 @@ public class Program
         app.Run();
 
 
-        async Task RegisterChannels(IConnectionFactory factory)
+        async Task RegisterConnection(IConnectionFactory factory)
         {
             var shouldRetry = true;
             var retries = 0;
@@ -132,12 +131,6 @@ public class Program
             
 
             builder.Services.AddSingleton(brokerConnection);
-
-            builder.Services.AddSingleton<ICreatedTransactionConsumerChannel, CreatedTransactionConsumerChannel>();
-
-            builder.Services.AddScoped<ICreatedConsolidationPublisherChannel, CreatedConsolidationPublisherChannel>();
-
-            builder.Services.AddSingleton<IRabbitMqQueueInitializerChannel, RabbitMqQueueInitializerChannel>();
         }
     }
 }

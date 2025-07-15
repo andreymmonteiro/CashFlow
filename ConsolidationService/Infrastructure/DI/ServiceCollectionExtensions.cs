@@ -30,7 +30,7 @@ namespace ConsolidationService.Infrastructure.DI
                 }
             };
 
-            services.AddSingleton(factory);
+            services.AddSingleton<IConnectionFactory>(factory);
 
             services.AddHostedService<RabbitMqQueueInitializer>();
 

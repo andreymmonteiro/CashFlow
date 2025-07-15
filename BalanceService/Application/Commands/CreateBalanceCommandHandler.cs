@@ -1,9 +1,7 @@
 ﻿using System.Text.Json;
-using System.Threading;
 using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
-using BalanceService.Infrastructure.Messaging.Channel;
 using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -11,20 +9,19 @@ using Grpc.Core;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
-using static EventStore.Client.StreamMessage;
 
 namespace BalanceService.Application.Commands
 {
     public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand, long>
     {
         private readonly IEventStoreWrapper _eventStore;
-        private readonly ICreatedBalancePublisherChannel _publisherChannel;
+        private readonly IConnection _connection;
         private readonly IMongoCollection<BalanceProjection> _balances;
         private readonly ILogger<CreateBalanceCommandHandler> _logger;
 
-        public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, ICreatedBalancePublisherChannel publisherChannel, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
+        public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, IConnection connection, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
         {
-            _publisherChannel = publisherChannel;
+            _connection = connection;
             _logger = logger;
             _balances = balances;
             _eventStore = eventStore;
@@ -32,7 +29,7 @@ namespace BalanceService.Application.Commands
 
         public async Task<long> HandleAsync(CreateBalanceCommand command, CancellationToken cancellationToken)
         {
-            var channel = await _publisherChannel.CreateChannelAsync();
+            using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
             var properties = new BasicProperties
             {

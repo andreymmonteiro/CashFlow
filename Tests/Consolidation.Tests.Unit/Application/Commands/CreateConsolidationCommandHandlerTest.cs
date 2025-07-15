@@ -1,8 +1,7 @@
-﻿using ConsolidationService.Application.Commands;
+﻿using Consolidation.Tests.Unit.Common;
+using ConsolidationService.Application.Commands;
 using ConsolidationService.Infrastructure.EventStore;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
-using Consolidation.Tests.Unit.Common;
 using EventStore.Client;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -14,7 +13,7 @@ namespace Consolidation.Tests.Unit.Application.Commands;
 public class CreateConsolidationCommandHandlerTests
 {
     private readonly IEventStoreWrapper _eventStore = Substitute.For<IEventStoreWrapper>();
-    private readonly ICreatedConsolidationPublisherChannel _publisherChannel = Substitute.For<ICreatedConsolidationPublisherChannel>();
+    private readonly IConnection _connection = Substitute.For<IConnection>();
     private readonly IMongoCollection<ConsolidationProjection> _consolidations = Substitute.For<IMongoCollection<ConsolidationProjection>>();
     private readonly ILogger<CreateConsolidationCommandHandler> _logger = Substitute.For<ILogger<CreateConsolidationCommandHandler>>();
     private readonly IChannel _channel = Substitute.For<IChannel>();
@@ -23,10 +22,12 @@ public class CreateConsolidationCommandHandlerTests
 
     public CreateConsolidationCommandHandlerTests()
     {
-        _publisherChannel.CreateChannelAsync().Returns(Task.FromResult(_channel));
+        _connection.CreateChannelAsync(cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(_channel));
+
         _handler = new CreateConsolidationCommandHandler(
             _eventStore,
-            _publisherChannel,
+            _connection,
             _consolidations,
             _logger);
     }
