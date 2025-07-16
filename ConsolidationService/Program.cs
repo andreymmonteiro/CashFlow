@@ -1,6 +1,7 @@
 using ConsolidationService.Application.Commands;
 using ConsolidationService.Application.Queries;
 using ConsolidationService.Infrastructure.DI;
+using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
 using ConsolidationService.Infrastructure.Options;
 using ConsolidationService.Presentation.Dtos.Request;
@@ -32,6 +33,8 @@ public class Program
 
             await RegisterConnection(factory);
         }
+
+        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
 
         builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand, long>, CreateConsolidationCommandHandler>();
 

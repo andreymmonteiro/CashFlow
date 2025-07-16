@@ -2,6 +2,7 @@
 using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
+using BalanceService.Infrastructure.Messaging.Channels;
 using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -15,13 +16,13 @@ namespace BalanceService.Application.Commands
     public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand, long>
     {
         private readonly IEventStoreWrapper _eventStore;
-        private readonly IConnection _connection;
+        private readonly IChannelPool _channelPool;
         private readonly IMongoCollection<BalanceProjection> _balances;
         private readonly ILogger<CreateBalanceCommandHandler> _logger;
 
-        public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, IConnection connection, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
+        public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, IChannelPool channelPool, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
         {
-            _connection = connection;
+            _channelPool = channelPool;
             _logger = logger;
             _balances = balances;
             _eventStore = eventStore;
@@ -29,7 +30,8 @@ namespace BalanceService.Application.Commands
 
         public async Task<long> HandleAsync(CreateBalanceCommand command, CancellationToken cancellationToken)
         {
-            using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            await using var lease = await _channelPool.RentAsync(cancellationToken);
+            var channel = lease.Channel;
 
             var properties = new BasicProperties
             {

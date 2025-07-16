@@ -26,7 +26,10 @@ namespace TransactionService.Infrastructure.DI
 
                     // local and development purpose
                     CertificateValidationCallback = (sender, certificate, chain, errors) => true
-                }
+                },
+                AutomaticRecoveryEnabled = true,
+                TopologyRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
             };
 
             services.AddSingleton(factory);

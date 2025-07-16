@@ -2,6 +2,7 @@
 using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.EventStore;
+using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
 using ConsolidationService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -15,14 +16,14 @@ namespace ConsolidationService.Application.Commands
     public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolidationCommand, long>
     {
         private readonly IEventStoreWrapper _eventStore;
+        private readonly IChannelPool _channelPool;
         private readonly IMongoCollection<ConsolidationProjection> _consolidations;
         private readonly ILogger<CreateConsolidationCommandHandler> _logger;
-        private readonly IConnection _connection;
 
-        public CreateConsolidationCommandHandler(IEventStoreWrapper eventStore, IConnection connection, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
+        public CreateConsolidationCommandHandler(IEventStoreWrapper eventStore, IChannelPool channelPool, IMongoCollection<ConsolidationProjection> consolidations, ILogger<CreateConsolidationCommandHandler> logger)
         {
             _eventStore = eventStore;
-            _connection = connection;
+            _channelPool = channelPool;
             _consolidations = consolidations;
             _logger = logger;
         }
@@ -44,7 +45,9 @@ namespace ConsolidationService.Application.Commands
 
             var eventId = Uuid.FromGuid(id);
 
-            using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            await using var lease = await _channelPool.RentAsync(cancellationToken);
+
+            var channel = lease.Channel;
 
             await channel.QueueDeclareAsync("consolidation-created", durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
 

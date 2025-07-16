@@ -1,26 +1,20 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using EventStore.Client;
+﻿using EventStore.Client;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using NSubstitute;
 using RabbitMQ.Client;
 using Transaction.Tests.Unit.Common;
 using TransactionService.Application.Commands;
-using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.EventStore;
+using TransactionService.Infrastructure.Messaging.Channels;
 using TransactionService.Infrastructure.Projections;
-using TransactionService.Infrastructure.Utilities;
-using Xunit;
 
 namespace Transaction.Tests.Unit.Application.Commands;
 
 public class CreateTransactionCommandHandlerTests
 {
     private readonly IEventStoreWrapper _eventStore = Substitute.For<IEventStoreWrapper>();
-    private readonly IConnection _connection = Substitute.For<IConnection>();
+    private readonly IChannelPool _channelPool = Substitute.For<IChannelPool>();
     private readonly IMongoCollection<TransactionProjection> _mongoCollection = Substitute.For<IMongoCollection<TransactionProjection>>();
     private readonly ILogger<CreateTransactionCommandHandler> _logger = Substitute.For<ILogger<CreateTransactionCommandHandler>>();
     private readonly IChannel _channel = Substitute.For<IChannel>();
@@ -29,11 +23,13 @@ public class CreateTransactionCommandHandlerTests
 
     public CreateTransactionCommandHandlerTests()
     {
-        _connection.CreateChannelAsync().Returns(Task.FromResult(_channel));
+        var lease = new ChannelLease(_channelPool, _channel);
+
+        _channelPool.RentAsync(Arg.Any<CancellationToken>()).Returns(lease);
 
         _handler = new CreateTransactionCommandHandler(
             _eventStore,
-            _connection,
+            _channelPool,
             _mongoCollection,
             _logger);
     }

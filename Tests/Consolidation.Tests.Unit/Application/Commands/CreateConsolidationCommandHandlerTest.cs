@@ -1,6 +1,7 @@
 ﻿using Consolidation.Tests.Unit.Common;
 using ConsolidationService.Application.Commands;
 using ConsolidationService.Infrastructure.EventStore;
+using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
 using EventStore.Client;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace Consolidation.Tests.Unit.Application.Commands;
 public class CreateConsolidationCommandHandlerTests
 {
     private readonly IEventStoreWrapper _eventStore = Substitute.For<IEventStoreWrapper>();
-    private readonly IConnection _connection = Substitute.For<IConnection>();
+    private readonly IChannelPool _channelPool = Substitute.For<IChannelPool>();
     private readonly IMongoCollection<ConsolidationProjection> _consolidations = Substitute.For<IMongoCollection<ConsolidationProjection>>();
     private readonly ILogger<CreateConsolidationCommandHandler> _logger = Substitute.For<ILogger<CreateConsolidationCommandHandler>>();
     private readonly IChannel _channel = Substitute.For<IChannel>();
@@ -22,12 +23,14 @@ public class CreateConsolidationCommandHandlerTests
 
     public CreateConsolidationCommandHandlerTests()
     {
-        _connection.CreateChannelAsync(cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(_channel));
+        var lease = new ChannelLease(_channelPool, _channel);
+
+        _channelPool.RentAsync(Arg.Any<CancellationToken>())
+            .Returns(lease);
 
         _handler = new CreateConsolidationCommandHandler(
             _eventStore,
-            _connection,
+            _channelPool,
             _consolidations,
             _logger);
     }

@@ -7,6 +7,7 @@ using RabbitMQ.Client;
 using TransactionService.Domain.Aggregates;
 using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.EventStore;
+using TransactionService.Infrastructure.Messaging.Channels;
 using TransactionService.Infrastructure.Projections;
 using TransactionService.Infrastructure.Utilities;
 
@@ -15,26 +16,27 @@ namespace TransactionService.Application.Commands;
 public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTransactionCommand, Guid>
 {
     private readonly IEventStoreWrapper _eventStore;
-    private readonly IConnection _connection;
+    private readonly IChannelPool _pool;
     private readonly IMongoCollection<TransactionProjection> _transaction;
     private readonly ILogger<CreateTransactionCommandHandler> _logger;
 
     public CreateTransactionCommandHandler(
         IEventStoreWrapper eventStore,
-        IConnection connection,
+        IChannelPool pool,
         IMongoCollection<TransactionProjection> mongoCollection,
         ILogger<CreateTransactionCommandHandler> logger
         )
     {
         _eventStore = eventStore;
-        _connection = connection;
+        _pool = pool;
         _transaction = mongoCollection;
         _logger = logger;
+        _pool = pool;
     }
 
     public async Task<Guid> HandleAsync(CreateTransactionCommand command, CancellationToken cancellationToken)
     {
-        using var channel = await _connection.CreateChannelAsync();
+        await using var lease = await _pool.RentAsync(cancellationToken);
 
         var transaction = Transaction.Create(
             command.AccountId,
@@ -121,7 +123,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
             // Publish event
             var body = JsonSerializer.SerializeToUtf8Bytes(@event);
 
-            await channel.BasicPublishAsync(
+            await lease.Channel.BasicPublishAsync(
                 exchange: "",
                 routingKey: "transaction-created",
                 mandatory: true,
@@ -147,7 +149,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 TransactionId = transactionId
             });
 
-            await channel.BasicPublishAsync(
+            await lease.Channel.BasicPublishAsync(
                 exchange: "",
                 routingKey: "transaction-dlq",
                 mandatory: true,

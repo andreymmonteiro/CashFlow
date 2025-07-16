@@ -1,6 +1,7 @@
 ﻿using Balance.Tests.Unit.Common;
 using BalanceService.Application.Commands;
 using BalanceService.Infrastructure.EventStore;
+using BalanceService.Infrastructure.Messaging.Channels;
 using BalanceService.Infrastructure.Projections;
 using EventStore.Client;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace Balance.Tests.Unit.Application.Commands;
 public class CreateBalanceCommandHandlerTests
 {
     private readonly IEventStoreWrapper _eventStore = Substitute.For<IEventStoreWrapper>();
-    private readonly IConnection _connection = Substitute.For<IConnection>();
+    private readonly IChannelPool _channelPool = Substitute.For<IChannelPool>();
     private readonly IMongoCollection<BalanceProjection> _balances = Substitute.For<IMongoCollection<BalanceProjection>>();
     private readonly ILogger<CreateBalanceCommandHandler> _logger = Substitute.For<ILogger<CreateBalanceCommandHandler>>();
     private readonly IChannel _channel = Substitute.For<IChannel>();
@@ -22,12 +23,13 @@ public class CreateBalanceCommandHandlerTests
 
     public CreateBalanceCommandHandlerTests()
     {
-        _connection.CreateChannelAsync(cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(_channel));
+        var lease = new ChannelLease(_channelPool, _channel);
+
+        _channelPool.RentAsync(Arg.Any<CancellationToken>()).Returns(lease);
 
         _handler = new CreateBalanceCommandHandler(
             _eventStore,
-            _connection,
+            _channelPool,
             _balances,
             _logger);
     }

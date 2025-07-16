@@ -5,6 +5,7 @@ using RabbitMQ.Client.Exceptions;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Infrastructure.DI;
+using TransactionService.Infrastructure.Messaging.Channels;
 using TransactionService.Infrastructure.Messaging.Consumers;
 using TransactionService.Infrastructure.Options;
 using TransactionService.Presentation.Dtos.Request;
@@ -31,6 +32,8 @@ public class Program
             .AddRabbitMq(builder.Configuration["RabbitMq:Host"]);
 
         var mongoDbOptions = builder.Configuration.GetSection(MongoDbOptions.SectionName).Get<MongoDbOptions>();
+
+        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
 
         builder.Services
             .AddMongoDb(mongoDbOptions)

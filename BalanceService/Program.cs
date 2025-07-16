@@ -1,6 +1,7 @@
 using BalanceService.Application.Commands;
 using BalanceService.Application.Queries;
 using BalanceService.Infrastructure.DI;
+using BalanceService.Infrastructure.Messaging.Channels;
 using BalanceService.Infrastructure.Messaging.Consumers;
 using BalanceService.Infrastructure.Options;
 using BalanceService.Presentation.Dtos.Request;
@@ -34,6 +35,8 @@ public class Program
 
             await RegisterConnection(factory);
         }
+
+        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
 
         builder.Services.AddHostedService<CreatedConsolidationConsumer>();
 
