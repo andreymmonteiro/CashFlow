@@ -61,7 +61,7 @@ public class CreateConsolidationCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "consolidation.created",
+            "consolidation-created",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),
@@ -95,7 +95,7 @@ public class CreateConsolidationCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "consolidation.dlq",
+            "consolidation-dlq",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),

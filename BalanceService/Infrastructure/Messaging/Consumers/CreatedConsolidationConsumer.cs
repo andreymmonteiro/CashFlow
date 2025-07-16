@@ -81,7 +81,7 @@ namespace BalanceService.Infrastructure.Messaging.Consumers
             ex => _logger.LogError(ex, "Error in consumer"),
             stoppingToken);
 
-            await _channel.BasicConsumeAsync("consolidation.created", autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+            await _channel.BasicConsumeAsync("consolidation-created", autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

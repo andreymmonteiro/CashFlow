@@ -76,7 +76,7 @@ namespace ConsolidationService.Infrastructure.Messaging.Consumers
             ex => _logger.LogError(ex, "Error in consumer"),
             stoppingToken);
 
-            await _channel.BasicConsumeAsync("transaction.created", autoAck: false, consumer: consumer, stoppingToken);
+            await _channel.BasicConsumeAsync("transaction-created", autoAck: false, consumer: consumer, stoppingToken);
         }
 
         private async Task<ICommandHandler<CreateConsolidationCommand, long>> GetCommandHandler()

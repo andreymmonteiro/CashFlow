@@ -59,7 +59,7 @@ namespace TransactionService.Infrastructure.Messaging.Consumers
             ex => _logger.LogError(ex, "Error in consumer"),
             stoppingToken);
 
-            await channel.BasicConsumeAsync("create.transaction", autoAck: false, consumer: consumer, stoppingToken);
+            await channel.BasicConsumeAsync("create-transaction", autoAck: false, consumer: consumer, stoppingToken);
         }
 
         private async Task<ICommandHandler<CreateTransactionCommand, Guid>> GetCommandHandler()

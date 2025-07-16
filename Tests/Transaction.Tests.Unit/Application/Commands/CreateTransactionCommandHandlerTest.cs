@@ -67,7 +67,7 @@ public class CreateTransactionCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "transaction.created",
+            "transaction-created",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),
@@ -100,7 +100,7 @@ public class CreateTransactionCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "transaction.dlq",
+            "transaction-dlq",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),

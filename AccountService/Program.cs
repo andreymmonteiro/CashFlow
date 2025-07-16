@@ -89,7 +89,7 @@ app.MapPost("/login", async (LoginDto login, IMongoCollection<UserProjection> db
     // Create JWT token
     var tokenString = JwtBearerAuthenticationOptions.Authenticate(user.AccountId, user.Name, user.Email);
 
-    return Results.Ok(new { access_token = tokenString });
+    return Results.Ok(new LoginResultDto(user.AccountId, tokenString));
 });
 
 

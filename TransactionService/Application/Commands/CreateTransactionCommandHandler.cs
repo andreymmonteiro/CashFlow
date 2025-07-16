@@ -123,7 +123,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
             await channel.BasicPublishAsync(
                 exchange: "",
-                routingKey: "transaction.created",
+                routingKey: "transaction-created",
                 mandatory: true,
                 basicProperties: properties,
                 body: body,
@@ -149,7 +149,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
 
             await channel.BasicPublishAsync(
                 exchange: "",
-                routingKey: "transaction.dlq",
+                routingKey: "transaction-dlq",
                 mandatory: true,
                 basicProperties: properties,
                 body: dlqBody);

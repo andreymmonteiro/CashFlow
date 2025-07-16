@@ -46,7 +46,7 @@ namespace ConsolidationService.Application.Commands
 
             using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
-            await channel.QueueDeclareAsync("consolidation.created", durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
+            await channel.QueueDeclareAsync("consolidation-created", durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
 
             var streamId = id.ToString();
 
@@ -63,7 +63,7 @@ namespace ConsolidationService.Application.Commands
 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: "consolidation.created",
+                    routingKey: "consolidation-created",
                     mandatory: true,
                     basicProperties: properties,
                     body: body,
@@ -88,7 +88,7 @@ namespace ConsolidationService.Application.Commands
 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: "consolidation.dlq",
+                    routingKey: "consolidation-dlq",
                     mandatory: true,
                     basicProperties: properties,
                     body: dlqBody);

@@ -9,7 +9,7 @@ namespace BalanceService.Infrastructure.Messaging
             using var channel = await Connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "consolidation.created",
+                queue: "consolidation-created",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -17,7 +17,7 @@ namespace BalanceService.Infrastructure.Messaging
                 cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "balance.created",
+                queue: "balance-created",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -25,7 +25,7 @@ namespace BalanceService.Infrastructure.Messaging
                 cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "balance.dlq",
+                queue: "balance-dlq",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,

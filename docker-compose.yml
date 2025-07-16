@@ -14,7 +14,7 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
-      - ./rabbitmq/certs:/certs:ro
+      - ./Rabbitmq/Certs:/certs:ro
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
 
   mongodbStandalone:

@@ -63,7 +63,7 @@ namespace BalanceService.Application.Commands
 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: "balance.created",
+                    routingKey: "balance-created",
                     mandatory: true,
                     basicProperties: properties,
                     body: body,
@@ -88,7 +88,7 @@ namespace BalanceService.Application.Commands
 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: "consolidation.dlq",
+                    routingKey: "balance-dlq",
                     mandatory: true,
                     basicProperties: properties,
                     body: dlqBody);

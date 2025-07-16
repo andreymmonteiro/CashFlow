@@ -58,7 +58,7 @@ public class Program
 
                     shouldRetry = retries < 3;
 
-                    await Task.Delay(3000);
+                    await Task.Delay(10000);
                 }
             }
 

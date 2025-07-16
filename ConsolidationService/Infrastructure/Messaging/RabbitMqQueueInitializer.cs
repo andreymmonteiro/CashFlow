@@ -9,7 +9,7 @@ namespace ConsolidationService.Infrastructure.Messaging
             using var channel = await Connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "transaction.created",
+                queue: "transaction-created",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -17,7 +17,7 @@ namespace ConsolidationService.Infrastructure.Messaging
                 cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "consolidation.created",
+                queue: "consolidation-created",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -25,7 +25,7 @@ namespace ConsolidationService.Infrastructure.Messaging
                 cancellationToken: cancellationToken);
 
             await channel.QueueDeclareAsync(
-                queue: "consolidation.dlq",
+                queue: "consolidation-dlq",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,

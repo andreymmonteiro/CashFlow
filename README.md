@@ -126,7 +126,7 @@ docker compose up -d
 - HTTPS: https://localhost:7061/Swagger
 - HTTP: http://localhost:5010/Swagger
 
-## Balance Service
+### Balance Service
 
 - HTTPS: https://localhost:7219/Swagger
 - HTTP: http://localhost:5070/Swagger

@@ -61,7 +61,7 @@ public class CreateBalanceCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "balance.created",
+            "balance-created",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),
@@ -89,7 +89,7 @@ public class CreateBalanceCommandHandlerTests
 
         await _channel.Received(1).BasicPublishAsync(
             "",
-            "consolidation.dlq",
+            "balance-dlq",
             true,
             Arg.Any<BasicProperties>(),
             Arg.Any<ReadOnlyMemory<byte>>(),
