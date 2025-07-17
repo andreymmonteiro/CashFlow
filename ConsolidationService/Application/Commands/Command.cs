@@ -1,6 +1,5 @@
-﻿namespace ConsolidationService.Application.Commands
+﻿namespace ConsolidationService.Application.Commands;
+
+public abstract record Command
 {
-    public abstract record Command
-    {
-    }
 }

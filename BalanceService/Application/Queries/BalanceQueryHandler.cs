@@ -4,33 +4,32 @@ using BalanceService.Presentation.Dtos.Request;
 using BalanceService.Presentation.Dtos.Response;
 using MongoDB.Driver;
 
-namespace BalanceService.Application.Queries
+namespace BalanceService.Application.Queries;
+
+public class BalanceQueryHandler : IQueryHandler<BalanceRequest, BalanceResponse>
 {
-    public class BalanceQueryHandler : IQueryHandler<BalanceRequest, BalanceResponse>
+    private readonly IMongoCollection<BalanceProjection> _balances;
+    private readonly ILogger<CreateBalanceCommandHandler> _logger;
+
+    public BalanceQueryHandler(IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
     {
-        private readonly IMongoCollection<BalanceProjection> _balances;
-        private readonly ILogger<CreateBalanceCommandHandler> _logger;
+        _balances = balances;
+        _logger = logger;
+    }
 
-        public BalanceQueryHandler(IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
+    public async Task<BalanceResponse> HandleAsync(BalanceRequest parameter, CancellationToken cancellationToken)
+    {
+        try
         {
-            _balances = balances;
-            _logger = logger;
+            var result = await _balances.Find(f => f.AccountId == parameter.AccountId).FirstOrDefaultAsync(cancellationToken);
+
+            return (BalanceResponse)result;
         }
-
-        public async Task<BalanceResponse> HandleAsync(BalanceRequest parameter, CancellationToken cancellationToken)
+        catch (Exception e)
         {
-            try
-            {
-                var result = await _balances.Find(f => f.AccountId == parameter.AccountId).FirstOrDefaultAsync(cancellationToken);
-
-                return (BalanceResponse)result;
-            }
-            catch(Exception e)
-            {
-                _logger.LogError(e, "Error occurred while handling DailyConsolidationQuery for AccountId: {AccountId}",
-                    parameter.AccountId);
-                throw;
-            }
+            _logger.LogError(e, "Error occurred while handling DailyConsolidationQuery for AccountId: {AccountId}",
+                parameter.AccountId);
+            throw;
         }
     }
 }

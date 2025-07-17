@@ -1,4 +1,3 @@
-﻿namespace TransactionService.Application.Commands
-{
-    public record CreateTransactionCommand(Guid AccountId, decimal Amount);
-}
+﻿namespace TransactionService.Application.Commands;
+
+public record CreateTransactionCommand(Guid AccountId, decimal Amount);

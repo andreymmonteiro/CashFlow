@@ -1,17 +1,16 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace BalanceService.Infrastructure.Projections
+namespace BalanceService.Infrastructure.Projections;
+
+public record BalanceProjection
 {
-    public record BalanceProjection
-    {
-        [BsonElement("_id")]
-        public ObjectId Id { get; set; }
+    [BsonElement("_id")]
+    public ObjectId Id { get; set; }
 
-        public string AccountId { get; set; }
+    public string AccountId { get; set; }
 
-        public decimal Amount { get; set; }
+    public decimal Amount { get; set; }
 
-        public IList<string> AppliedStreamIds { get; set; } = new List<string>();
-    }
+    public IList<string> AppliedStreamIds { get; set; } = new List<string>();
 }

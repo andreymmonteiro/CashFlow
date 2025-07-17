@@ -76,7 +76,7 @@ public sealed class ChannelPool : IChannelPool
     {
         var nowTicks = Stopwatch.GetTimestamp();
 
-        var idleNow = _idle.Count;          // rough estimate
+        var idleNow = _idle.Count;
         if (idleNow >= minSize &&
             idleNow > 0 &&
             _idle.TryPeek(out var head) &&
@@ -94,7 +94,6 @@ public sealed class ChannelPool : IChannelPool
 
     public async ValueTask DisposeAsync()
     {
-        // drain
         while (_idle.TryDequeue(out var tuple))
         {
             await tuple.Channel.DisposeAsync();

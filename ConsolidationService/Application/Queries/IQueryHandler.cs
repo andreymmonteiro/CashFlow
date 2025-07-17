@@ -1,7 +1,6 @@
-﻿namespace ConsolidationService.Application.Queries
+﻿namespace ConsolidationService.Application.Queries;
+
+public interface IQueryHandler<TParameter, TResponse>
 {
-    public interface IQueryHandler<TParameter, TResponse>
-    {
-        Task<TResponse> HandleAsync(TParameter parameter, CancellationToken cancellationToken);
-    }
+    Task<TResponse> HandleAsync(TParameter parameter, CancellationToken cancellationToken);
 }

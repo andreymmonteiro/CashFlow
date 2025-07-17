@@ -6,70 +6,69 @@ using EventStore.Client;
 using MongoDB.Driver;
 using RabbitMQ.Client;
 
-namespace ConsolidationService.Infrastructure.DI
+namespace ConsolidationService.Infrastructure.DI;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+
+    public static ConnectionFactory AddRabbitMq(this IServiceCollection services, string host)
     {
-
-        public static ConnectionFactory AddRabbitMq(this IServiceCollection services, string host)
+        var factory = new ConnectionFactory
         {
-            var factory = new ConnectionFactory
+            HostName = host,
+            Port = 5671,
+            UserName = "guest",
+            Password = "guest",
+            Ssl = new SslOption
             {
-                HostName = host,
-                Port = 5671,
-                UserName = "guest",
-                Password = "guest",
-                Ssl = new SslOption
-                {
-                    Enabled = true,
-                    ServerName = "localhost",
-                    Version = System.Security.Authentication.SslProtocols.Tls12,
+                Enabled = true,
+                ServerName = "localhost",
+                Version = System.Security.Authentication.SslProtocols.Tls12,
 
-                    // local and development purpose
-                    CertificateValidationCallback = (sender, certificate, chain, errors) => true
-                },
-                AutomaticRecoveryEnabled = true,
-                TopologyRecoveryEnabled = true,
-                NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
-            };
+                // local and development purpose
+                CertificateValidationCallback = (sender, certificate, chain, errors) => true
+            },
+            AutomaticRecoveryEnabled = true,
+            TopologyRecoveryEnabled = true,
+            NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
+        };
 
-            services.AddSingleton<IConnectionFactory>(factory);
+        services.AddSingleton<IConnectionFactory>(factory);
 
-            services.AddHostedService<RabbitMqQueueInitializer>();
+        services.AddHostedService<RabbitMqQueueInitializer>();
 
-            return factory;
-        }
+        return factory;
+    }
 
-        public static IServiceCollection AddMongoDb(this IServiceCollection services, MongoDbOptions mongoDbOptions)
+    public static IServiceCollection AddMongoDb(this IServiceCollection services, MongoDbOptions mongoDbOptions)
+    {
+        services.AddSingleton<IMongoClient>(sp =>
         {
-            services.AddSingleton<IMongoClient>(sp =>
-            {
-                var settings = MongoClientSettings.FromConnectionString(
-                    mongoDbOptions.ConnectionString);
-                return new MongoClient(settings);
-            });
+            var settings = MongoClientSettings.FromConnectionString(
+                mongoDbOptions.ConnectionString);
+            return new MongoClient(settings);
+        });
 
-            services.AddScoped(sp =>
-            {
-                var client = sp.GetRequiredService<IMongoClient>();
-                var db = client.GetDatabase(mongoDbOptions.DatabaseName);
-                return db.GetCollection<ConsolidationProjection>(mongoDbOptions.CollectionName);
-            });
-
-            return services;
-        }
-
-        public static IServiceCollection AddEventStore(this IServiceCollection services, string connectionString)
+        services.AddScoped(sp =>
         {
-            services.AddSingleton(sp =>
-            {
-                var settings = EventStoreClientSettings.Create(connectionString);
-                return new EventStoreClient(settings);
-            });
+            var client = sp.GetRequiredService<IMongoClient>();
+            var db = client.GetDatabase(mongoDbOptions.DatabaseName);
+            return db.GetCollection<ConsolidationProjection>(mongoDbOptions.CollectionName);
+        });
 
-            services.AddSingleton<IEventStoreWrapper, EventStoreWrapper>();
+        return services;
+    }
 
-            return services;
-        }
+    public static IServiceCollection AddEventStore(this IServiceCollection services, string connectionString)
+    {
+        services.AddSingleton(sp =>
+        {
+            var settings = EventStoreClientSettings.Create(connectionString);
+            return new EventStoreClient(settings);
+        });
+
+        services.AddSingleton<IEventStoreWrapper, EventStoreWrapper>();
+
+        return services;
     }
 }

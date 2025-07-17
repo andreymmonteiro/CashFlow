@@ -1,6 +1,5 @@
-﻿namespace AccountService.Infrastructure
+﻿namespace AccountService.Infrastructure;
+
+public class UserHash
 {
-    public class UserHash
-    {
-    }
 }

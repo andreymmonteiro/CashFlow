@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
+﻿namespace AccountService.Presentation;
 
-namespace AccountService.Presentation
-{
-    public record UserResultDto(string AccountId, string Token);
-}
+public record UserResultDto(string AccountId, string Token);
+

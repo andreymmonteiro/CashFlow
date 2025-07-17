@@ -154,7 +154,8 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 routingKey: "transaction-dlq",
                 mandatory: true,
                 basicProperties: properties,
-                body: dlqBody);
+                body: dlqBody,
+                cancellationToken: cancellationToken);
 
             throw;
         }
