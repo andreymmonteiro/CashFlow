@@ -1,8 +1,9 @@
-﻿using TransactionService.Domain.Events;
+﻿using Domain.Shared;
+using TransactionService.Domain.Events;
 
 namespace TransactionService.Domain.Aggregates
 {
-    public sealed class Transaction
+    public sealed class Transaction : AggregateRoot
     {
         public Guid TransactionId { get; }
 
@@ -27,12 +28,17 @@ namespace TransactionService.Domain.Aggregates
                 throw new InvalidOperationException("Amount cannot be zero.");
             }
 
+            var dataTimeNow = DateTime.UtcNow;
+
             var transactionId = Guid.NewGuid();
 
-            return new (transactionId, accountId, amount, DateTime.UtcNow);
-        }
+            var transactionCreatedEvent = new TransactionCreatedEvent(transactionId, accountId, amount, dataTimeNow);
 
-        public TransactionCreatedEvent ToCreatedEvent()
-            => new(TransactionId, AccountId, Amount, CreatedAt);
+            var transaction = new Transaction(transactionId, accountId, amount, dataTimeNow);
+
+            transaction.AddDomainEvent(transactionCreatedEvent);
+
+            return transaction;
+        }
     }
 }

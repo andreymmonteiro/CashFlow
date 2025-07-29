@@ -12,19 +12,14 @@ public sealed class Consolidation
 
     public DateTime Date { get; }
 
-    private Consolidation(string accountId, ConsolidationAmount amount, DateTime date)
+    private Consolidation(Guid accountId, ConsolidationAmount amount, DateTime date)
     {
-        if (!Guid.TryParse(accountId, out var accountIdConverted))
-        {
-            throw new InvalidOperationException("Account id is not valid Guid.");
-        }
-
-        AccountId = accountIdConverted;
+        AccountId = accountId;
         Date = date;
         Amount = amount;
     }
 
-    public static Consolidation Create(string accountId, decimal amount, DateTime createdAt)
+    public static Consolidation Create(Guid accountId, decimal amount, DateTime createdAt)
         => new(accountId, amount, createdAt);
 
     public ConsolidationCreatedEvent ToCreatedEvent()

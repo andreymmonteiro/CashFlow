@@ -4,10 +4,16 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
+using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.DI;
+using TransactionService.Infrastructure.EventHandlers;
+using TransactionService.Infrastructure.EventStore;
+using TransactionService.Infrastructure.Logging;
 using TransactionService.Infrastructure.Messaging.Channels;
 using TransactionService.Infrastructure.Messaging.Consumers;
+using TransactionService.Infrastructure.Messaging.Publishers;
 using TransactionService.Infrastructure.Options;
+using TransactionService.Infrastructure.Repositories;
 using TransactionService.Presentation.Dtos.Request;
 using TransactionService.Presentation.Dtos.Response;
 
@@ -73,6 +79,16 @@ public class Program
         builder.Services.AddScoped<ICommandHandler<CreateTransactionCommand, Guid>, CreateTransactionCommandHandler>();
 
         builder.Services.AddScoped<IQueryHandler<DailyTransactionRequest, DailyTransactionResponse>, DailyTransactionQueryHandler>();
+
+        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+
+        builder.Services.AddScoped<IEventHandler<TransactionCreatedEvent>, TransactionCreatedProjectionHandler>();
+
+        builder.Services.AddScoped<IPublisherHandler<TransactionCreatedEvent>, TransactionCreatedPublisherHandler>();
+
+        builder.Services.AddScoped<IExceptionNotifier, ExceptionNotifier>();
+
+        builder.Services.AddHostedService<EventStoreSubscriptionService>();
 
         builder.Services.AddHostedService<CreateTransactionConsumer>();
 

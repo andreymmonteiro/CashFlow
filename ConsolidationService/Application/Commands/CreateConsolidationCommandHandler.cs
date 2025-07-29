@@ -35,7 +35,7 @@ public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolida
             Persistent = true
         };
 
-        var consolidation = Consolidation.Create(command.AccountId, command.Amount, command.CreatedAt);
+        var consolidation = Consolidation.Create(Guid.Parse(command.AccountId), command.Amount, command.CreatedAt);
 
         var @event = consolidation.ToCreatedEvent();
 

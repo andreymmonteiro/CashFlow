@@ -10,6 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CashFlow.Domain.Shared" Version="1.0.0" />
 		<PackageReference Include="EventStore.Client" Version="22.0.0" />
 		<PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.9" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
