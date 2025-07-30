@@ -2,5 +2,5 @@
 
 public abstract record DomainEventBase : IDomainEvent
 {
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; private set; } = DateTime.UtcNow;
 }

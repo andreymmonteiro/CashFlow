@@ -112,86 +112,86 @@ services:
       - cashflow-net
     restart: unless-stopped
 
-  # transactionservice:
-  #   build:
-  #     context: ./TransactionService
-  #     dockerfile: Dockerfile
-  #   container_name: transactionservice
-  #   ports:
-  #     - "5106:80"       # inside container runs on 80, map to 5106
-  #     - "7203:443"      # optional, if you need https dev cert
-  #   networks:
-  #     - cashflow-net
-  #   environment:
-  #     ASPNETCORE_ENVIRONMENT: Development
-  #     MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneTransactionService:27017
-  #     MongoDb__DatabaseName: CashFlowDb
-  #     MongoDb__CollectionName: transaction
-  #     EventStoreDb__ConnectionString: esdb://eventstoreTransactionService:2113?tls=false
-  #     RabbitMq__Host: rabbitmq
-  #     ASPNETCORE_URLS: http://+:80;https://+:443
-  #     ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
-  #     ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
-  #   depends_on:
-  #     - rabbitmq
-  #     - mongodbStandaloneTransactionService
-  #     - eventstoreTransactionService
-  #   volumes:
-  #     - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+  transactionservice:
+    build:
+      context: ./TransactionService
+      dockerfile: Dockerfile
+    container_name: transactionservice
+    ports:
+      - "5106:80"       # inside container runs on 80, map to 5106
+      - "7203:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneTransactionService:27017
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: transaction
+      EventStoreDb__ConnectionString: esdb://eventstoreTransactionService:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandaloneTransactionService
+      - eventstoreTransactionService
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
 
-  # consolidationservice:
-  #   build:
-  #     context: ./ConsolidationService
-  #     dockerfile: Dockerfile
-  #   container_name: consolidationservice
-  #   ports:
-  #     - "5010:80"       # inside container runs on 80, map to 5106
-  #     - "7061:443"      # optional, if you need https dev cert
-  #   networks:
-  #     - cashflow-net
-  #   environment:
-  #     ASPNETCORE_ENVIRONMENT: Development
-  #     MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneConsolidationService:27017
-  #     MongoDb__DatabaseName: CashFlowDb
-  #     MongoDb__CollectionName: consolidation
-  #     EventStoreDb__ConnectionString: esdb://eventstoreConsolidationService:2113?tls=false
-  #     RabbitMq__Host: rabbitmq
-  #     ASPNETCORE_URLS: http://+:80;https://+:443
-  #     ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
-  #     ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
-  #   depends_on:
-  #     - rabbitmq
-  #     - mongodbStandaloneConsolidationService
-  #     - eventstoreConsolidationService
-  #   volumes:
-  #     - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+  consolidationservice:
+    build:
+      context: ./ConsolidationService
+      dockerfile: Dockerfile
+    container_name: consolidationservice
+    ports:
+      - "5010:80"       # inside container runs on 80, map to 5106
+      - "7061:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneConsolidationService:27017
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: consolidation
+      EventStoreDb__ConnectionString: esdb://eventstoreConsolidationService:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandaloneConsolidationService
+      - eventstoreConsolidationService
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
 
-  # balanceservice:
-  #   build:
-  #     context: ./BalanceService
-  #     dockerfile: Dockerfile
-  #   container_name: balanceservice
-  #   ports:
-  #     - "5070:80"       # inside container runs on 80, map to 5106
-  #     - "7219:443"      # optional, if you need https dev cert
-  #   networks:
-  #     - cashflow-net
-  #   environment:
-  #     ASPNETCORE_ENVIRONMENT: Development
-  #     MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneBalanceService:27017
-  #     MongoDb__DatabaseName: CashFlowDb
-  #     MongoDb__CollectionName: balance
-  #     EventStoreDb__ConnectionString: esdb://eventstoreBalanceService:2113?tls=false
-  #     RabbitMq__Host: rabbitmq
-  #     ASPNETCORE_URLS: http://+:80;https://+:443
-  #     ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
-  #     ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
-  #   depends_on:
-  #     - rabbitmq
-  #     - mongodbStandaloneBalanceService
-  #     - eventstoreBalanceService
-  #   volumes:
-  #     - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
+  balanceservice:
+    build:
+      context: ./BalanceService
+      dockerfile: Dockerfile
+    container_name: balanceservice
+    ports:
+      - "5070:80"       # inside container runs on 80, map to 5106
+      - "7219:443"      # optional, if you need https dev cert
+    networks:
+      - cashflow-net
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MongoDb__ConnectionString: mongodb://root:1234@mongodbStandaloneBalanceService:27017
+      MongoDb__DatabaseName: CashFlowDb
+      MongoDb__CollectionName: balance
+      EventStoreDb__ConnectionString: esdb://eventstoreBalanceService:2113?tls=false
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: http://+:80;https://+:443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: qaz123wsx456
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnet-dev-cert.pfx
+    depends_on:
+      - rabbitmq
+      - mongodbStandaloneBalanceService
+      - eventstoreBalanceService
+    volumes:
+      - ./aspnet-dev-cert.pfx:/https/aspnet-dev-cert.pfx:ro
 
   # accountservice:
   #   build:

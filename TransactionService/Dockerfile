@@ -7,6 +7,9 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
+# Copy nuget.config with GitHub Packages source
+COPY nuget.config ./
+
 # Copy csproj and restore as distinct layers
 COPY TransactionService.csproj ./
 RUN dotnet restore TransactionService.csproj

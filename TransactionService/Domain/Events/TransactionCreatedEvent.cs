@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Domain.Shared;
+﻿using Domain.Shared;
 
 namespace TransactionService.Domain.Events;
 

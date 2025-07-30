@@ -1,28 +1,37 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# Use ASP.NET runtime as base for final image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 
-
-# This stage is used to build the service project
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["BalanceService.csproj", "./"]
-RUN dotnet restore "./BalanceService.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "./BalanceService.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Copy nuget.config with GitHub Packages source
+COPY nuget.config ./
+
+# Copy csproj and restore as distinct layers
+COPY BalanceService.csproj ./
+RUN dotnet restore BalanceService.csproj
+
+# Copy everything else and build
+COPY . ./
+RUN dotnet build BalanceService.csproj -c $BUILD_CONFIGURATION -o /app/build
+
+# Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BalanceService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish BalanceService.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Final stage
 FROM base AS final
 WORKDIR /app
+
+# Optional: if you really want to use a non-root user, define it here:
+# ENV APP_UID=1000
+# RUN useradd -u $APP_UID appuser && chown -R appuser /app
+# USER appuser
+
 COPY --from=publish /app/publish .
+
 ENTRYPOINT ["dotnet", "BalanceService.dll"]
