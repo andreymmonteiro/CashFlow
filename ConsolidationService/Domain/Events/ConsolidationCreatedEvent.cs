@@ -1,3 +1,8 @@
-﻿namespace ConsolidationService.Domain.Events;
+﻿using Domain.Shared;
 
-public record ConsolidationCreatedEvent(Guid AccountId, decimal Credit, decimal Debit, DateTime Date);
+namespace ConsolidationService.Domain.Events;
+
+public record ConsolidationCreatedEvent(Guid AccountId, decimal Credit, decimal Debit, decimal TotalAmount, DateTime Date) : IDomainEvent
+{
+    public DateTime OccurredOn => Date;
+}

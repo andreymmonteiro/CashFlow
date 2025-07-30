@@ -1,8 +1,14 @@
 using ConsolidationService.Application.Commands;
 using ConsolidationService.Application.Queries;
+using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.DI;
+using ConsolidationService.Infrastructure.EventHandlers;
+using ConsolidationService.Infrastructure.EventStore;
+using ConsolidationService.Infrastructure.Logging;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
+using ConsolidationService.Infrastructure.Messaging.Publishers;
 using ConsolidationService.Infrastructure.Options;
+using ConsolidationService.Infrastructure.Repositories;
 using ConsolidationService.Presentation.Dtos.Request;
 using ConsolidationService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
@@ -36,9 +42,19 @@ public class Program
 
         builder.Services.AddStreamTail();
 
-        builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand, long>, CreateConsolidationCommandHandler>();
+        builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand>, CreateConsolidationCommandHandler>();
 
         builder.Services.AddScoped<IQueryHandler<DailyConsolidationRequest, DailyConsolidationResponse>, DailyConsolidationQueryHandler>();
+
+        builder.Services.AddScoped<IEventHandler<ConsolidationCreatedEvent>, ConsolidationCreatedProjectionHandler>();
+
+        builder.Services.AddScoped<IPublisherHandler<ConsolidationCreatedEvent>, ConsolidationCreatedPublisherHandler>();
+
+        builder.Services.AddScoped<IExceptionNotifier, ExceptionNotifier>();
+
+        builder.Services.AddScoped<IConsolidationRepository, ConsolidationRepository>();
+
+        builder.Services.AddHostedService<EventStoreSubscriptionService>();
 
         builder.Services.AddExceptionHandler(options =>
         {

@@ -19,9 +19,6 @@ namespace TransactionService.Infrastructure.Repositories
             var amount = transaction.Amount;
             var createdAt = transaction.CreatedAt;
 
-            // Idempotent projection write
-            var projection = new TransactionProjection(transaction.TransactionId, transaction.AccountId, transaction.Amount, transaction.CreatedAt);
-
             var filter = Builders<TransactionProjection>.Filter.And(
                 Builders<TransactionProjection>.Filter.Eq(c => c.AccountId, accountId),
                 Builders<TransactionProjection>.Filter.Eq(c => c.TransactionId, transactionId),

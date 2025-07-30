@@ -78,11 +78,11 @@ public sealed class CreatedTransactionConsumer : BackgroundService
         await _channel.BasicConsumeAsync("transaction-created", autoAck: false, consumer: consumer, stoppingToken);
     }
 
-    private async Task<ICommandHandler<CreateConsolidationCommand, long>> GetCommandHandler()
+    private async Task<ICommandHandler<CreateConsolidationCommand>> GetCommandHandler()
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         return scope.ServiceProvider
-            .GetRequiredService<ICommandHandler<CreateConsolidationCommand, long>>();
+            .GetRequiredService<ICommandHandler<CreateConsolidationCommand>>();
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

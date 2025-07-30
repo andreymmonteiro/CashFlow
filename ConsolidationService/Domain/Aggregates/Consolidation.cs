@@ -1,9 +1,10 @@
 ﻿using ConsolidationService.Domain.Events;
 using ConsolidationService.Domain.ValueObjects;
+using Domain.Shared;
 
 namespace ConsolidationService.Domain.Aggregates;
 
-public sealed class Consolidation
+public sealed class Consolidation : AggregateRoot
 {
     public Guid AccountId { get; }
 
@@ -19,14 +20,17 @@ public sealed class Consolidation
     }
 
     public static Consolidation Create(Guid accountId, decimal amount, DateTime createdAt)
-        => new(accountId, amount, createdAt);
+    {
+        var consolidation = new Consolidation(accountId, amount, createdAt);
 
-    public ConsolidationCreatedEvent ToCreatedEvent()
-        => new(AccountId, Amount.Credit, Amount.Debit, Date);
+        consolidation.AddDomainEvent(
+            new ConsolidationCreatedEvent(
+                consolidation.AccountId, 
+                consolidation.Amount.Credit, 
+                consolidation.Amount.Debit, 
+                consolidation.Amount.TotalAmount, 
+                consolidation.Date));
 
-    //public static CreateConsolidationCommand CreateCommand(Guid accountId, decimal amount, DateTime date)
-    //    => new(
-    //        accountId.ToString(),
-    //        amount,
-    //        date);
+        return consolidation;
+    }
 }

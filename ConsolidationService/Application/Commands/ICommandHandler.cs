@@ -1,7 +1,7 @@
 ﻿namespace ConsolidationService.Application.Commands;
 
-public interface ICommandHandler<TCommand, TResponse>
+public interface ICommandHandler<TCommand>
     where TCommand : Command
 {
-    Task<TResponse> HandleAsync(TCommand command, CancellationToken cancellationToken);
+    Task HandleAsync(TCommand command, CancellationToken cancellationToken);
 }

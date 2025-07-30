@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CashFlow.Domain.Shared" Version="1.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
 		<PackageReference Include="EventStore.Client" Version="22.0.0" />
 		<PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.9" />
