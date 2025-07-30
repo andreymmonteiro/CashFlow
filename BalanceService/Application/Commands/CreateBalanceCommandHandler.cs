@@ -2,7 +2,6 @@
 using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
-using BalanceService.Infrastructure.Messaging.Channels;
 using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -10,6 +9,7 @@ using Grpc.Core;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
+using StreamTail.Channels;
 
 namespace BalanceService.Application.Commands;
 
@@ -38,15 +38,15 @@ public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand,
             Persistent = true
         };
 
-        var accountId = command.AccountId;
+        var accountId = command.AccountId.ToString();
 
-        var balance = Balance.Create(command.AccountId, command.Amount);
+        var balance = Balance.Create(command.AccountId, command.Debit, command.Credit);
 
         var @event = balance.ToCreatedEvent();
 
         var date = command.Date;
 
-        var id = DeterministicId.For(command.AccountId, date);
+        var id = DeterministicId.For(command.AccountId.ToString(), date);
 
         var eventId = Uuid.FromGuid(id);
 
@@ -54,8 +54,8 @@ public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand,
 
         try
         {
-            _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Amount: {Amount}",
-                                command.AccountId, command.Amount);
+            _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Debit: {Amount}, Credit: {Credit}",
+                                command.AccountId, command.Debit, command.Credit);
 
             await InsertEventAsync(@event, streamId, eventId, cancellationToken);
 

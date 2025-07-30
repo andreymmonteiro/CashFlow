@@ -2,16 +2,19 @@
 
 public class CreateBalanceCommand
 {
-    public string AccountId { get; }
+    public Guid AccountId { get; }
 
-    public decimal Amount { get; }
+    public decimal Debit { get; }
+
+    public decimal Credit { get; }
 
     public DateTime Date { get; }
 
-    public CreateBalanceCommand(string accountId, decimal amount, DateTime date)
+    public CreateBalanceCommand(Guid accountId, decimal debit, decimal credit, DateTime date)
     {
         AccountId = accountId;
-        Amount = amount;
+        Debit = debit;
+        Credit = credit;
         Date = date;
     }
 }

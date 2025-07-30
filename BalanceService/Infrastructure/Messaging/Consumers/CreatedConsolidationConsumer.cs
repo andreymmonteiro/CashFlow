@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.Json;
 using BalanceService.Application.Commands;
-using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -66,7 +65,7 @@ public sealed class CreatedConsolidationConsumer : BackgroundService
 
                 var commandHandler = await GetCommandHandler();
 
-                var command = Balance.CreateCommand(evt.AccountId, evt.Debit, evt.Credit, evt.Date);
+                var command = new CreateBalanceCommand(evt.AccountId, evt.Debit, evt.Credit, evt.Date);
 
                 await commandHandler.HandleAsync(command, stoppingToken);
 

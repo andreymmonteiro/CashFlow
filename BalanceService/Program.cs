@@ -1,7 +1,6 @@
 using BalanceService.Application.Commands;
 using BalanceService.Application.Queries;
 using BalanceService.Infrastructure.DI;
-using BalanceService.Infrastructure.Messaging.Channels;
 using BalanceService.Infrastructure.Messaging.Consumers;
 using BalanceService.Infrastructure.Options;
 using BalanceService.Presentation.Dtos.Request;
@@ -9,6 +8,7 @@ using BalanceService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using StreamTail.DI;
 
 namespace BalanceService;
 
@@ -36,7 +36,7 @@ public class Program
             await RegisterConnection(factory);
         }
 
-        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
+        builder.Services.AddStreamTail();
 
         builder.Services.AddHostedService<CreatedConsolidationConsumer>();
 

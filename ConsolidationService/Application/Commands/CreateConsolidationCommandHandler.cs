@@ -2,7 +2,6 @@
 using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.EventStore;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Projections;
 using ConsolidationService.Infrastructure.Utilities;
 using EventStore.Client;
@@ -10,6 +9,7 @@ using Grpc.Core;
 using MongoDB.Driver;
 using Polly;
 using RabbitMQ.Client;
+using StreamTail.Channels;
 
 namespace ConsolidationService.Application.Commands;
 
@@ -35,11 +35,11 @@ public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolida
             Persistent = true
         };
 
-        var consolidation = Consolidation.Create(Guid.Parse(command.AccountId), command.Amount, command.CreatedAt);
+        var consolidation = Consolidation.Create(command.AccountId, command.Amount, command.CreatedAt);
 
         var @event = consolidation.ToCreatedEvent();
 
-        var accountId = command.AccountId;
+        var accountId = command.AccountId.ToString();
 
         var id = DeterministicId.For(accountId, @event.Date);
 

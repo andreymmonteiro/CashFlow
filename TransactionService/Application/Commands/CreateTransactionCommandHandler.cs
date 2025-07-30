@@ -49,7 +49,7 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
                 new EventData(
                     eventId,
                     s.GetType().Name,
-                    JsonSerializer.SerializeToUtf8Bytes(s)));
+                    JsonSerializer.SerializeToUtf8Bytes(s, s.GetType())));
 
             await _eventStore.AppendToStreamAsync(
                 streamName,

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using RabbitMQ.Client;
-using TransactionService.Infrastructure.Messaging.Channels;
+using StreamTail.Channels;
 
 namespace TransactionService.Infrastructure.Logging;
 

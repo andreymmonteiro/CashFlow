@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.Json;
 using ConsolidationService.Application.Commands;
-using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -61,7 +60,7 @@ public sealed class CreatedTransactionConsumer : BackgroundService
 
                 var commandHandler = await GetCommandHandler();
 
-                var command = Consolidation.CreateCommand(evt.AccountId, evt.Amount, evt.CreatedAt);
+                var command = new CreateConsolidationCommand(evt.AccountId, evt.Amount, evt.CreatedAt);
 
                 await commandHandler.HandleAsync(command, stoppingToken);
 

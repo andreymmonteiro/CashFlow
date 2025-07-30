@@ -2,6 +2,7 @@ using EventStore.Client;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using StreamTail.DI;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Queries;
 using TransactionService.Domain.Events;
@@ -9,7 +10,6 @@ using TransactionService.Infrastructure.DI;
 using TransactionService.Infrastructure.EventHandlers;
 using TransactionService.Infrastructure.EventStore;
 using TransactionService.Infrastructure.Logging;
-using TransactionService.Infrastructure.Messaging.Channels;
 using TransactionService.Infrastructure.Messaging.Consumers;
 using TransactionService.Infrastructure.Messaging.Publishers;
 using TransactionService.Infrastructure.Options;
@@ -39,7 +39,7 @@ public class Program
 
         var mongoDbOptions = builder.Configuration.GetSection(MongoDbOptions.SectionName).Get<MongoDbOptions>();
 
-        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
+        builder.Services.AddStreamTail();
 
         builder.Services
             .AddMongoDb(mongoDbOptions)

@@ -1,5 +1,4 @@
-﻿using ConsolidationService.Application.Commands;
-using ConsolidationService.Domain.Events;
+﻿using ConsolidationService.Domain.Events;
 using ConsolidationService.Domain.ValueObjects;
 
 namespace ConsolidationService.Domain.Aggregates;
@@ -25,9 +24,9 @@ public sealed class Consolidation
     public ConsolidationCreatedEvent ToCreatedEvent()
         => new(AccountId, Amount.Credit, Amount.Debit, Date);
 
-    public static CreateConsolidationCommand CreateCommand(Guid accountId, decimal amount, DateTime date)
-        => new(
-            accountId.ToString(),
-            amount,
-            date);
+    //public static CreateConsolidationCommand CreateCommand(Guid accountId, decimal amount, DateTime date)
+    //    => new(
+    //        accountId.ToString(),
+    //        amount,
+    //        date);
 }

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using RabbitMQ.Client;
+using StreamTail.Channels;
 using TransactionService.Domain.Events;
-using TransactionService.Infrastructure.Messaging.Channels;
 
 namespace TransactionService.Infrastructure.Messaging.Publishers;
 

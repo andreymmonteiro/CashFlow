@@ -8,28 +8,16 @@ public sealed class Balance
 {
     public Guid AccountId { get; }
 
-    public decimal Amount { get; }
+    public BalanceAmount Amount { get; }
 
-    private Balance(string accountId, decimal amount)
+    private Balance(Guid accountId, decimal debit, decimal credit)
     {
-        if (!Guid.TryParse(accountId, out var accountIdConverted))
-        {
-            throw new InvalidOperationException("Account id is not valid Guid.");
-        }
-
-        AccountId = accountIdConverted;
-        Amount = amount;
+        AccountId = accountId;
+        Amount = (debit, credit);
     }
 
-    public static Balance Create(string accountId, decimal amount)
-        => new(accountId, amount);
-
-    public static CreateBalanceCommand CreateCommand(Guid accountId, decimal debit, decimal credit, DateTime date)
-    {
-        BalanceAmount balanceAmount = (debit, credit);
-
-        return new(accountId.ToString(), balanceAmount, date);
-    }
+    public static Balance Create(Guid accountId, decimal debit, decimal credit)
+        => new(accountId, debit, credit);
 
     public BalanceCreatedEvent ToCreatedEvent()
         => new(AccountId.ToString(), Amount);

@@ -1,7 +1,6 @@
 using ConsolidationService.Application.Commands;
 using ConsolidationService.Application.Queries;
 using ConsolidationService.Infrastructure.DI;
-using ConsolidationService.Infrastructure.Messaging.Channels;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
 using ConsolidationService.Infrastructure.Options;
 using ConsolidationService.Presentation.Dtos.Request;
@@ -9,6 +8,7 @@ using ConsolidationService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using StreamTail.DI;
 
 namespace ConsolidationService;
 
@@ -34,7 +34,7 @@ public class Program
             await RegisterConnection(factory);
         }
 
-        builder.Services.AddSingleton<IChannelPool, ChannelPool>();
+        builder.Services.AddStreamTail();
 
         builder.Services.AddScoped<ICommandHandler<CreateConsolidationCommand, long>, CreateConsolidationCommandHandler>();
 
