@@ -1,6 +1,6 @@
 ﻿namespace BalanceService.Application.Commands;
 
-public interface ICommandHandler<TCommand, TResponse>
+public interface ICommandHandler<TCommand>
 {
-    Task<TResponse> HandleAsync(TCommand command, CancellationToken cancellationToken);
+    Task HandleAsync(TCommand command, CancellationToken cancellationToken);
 }

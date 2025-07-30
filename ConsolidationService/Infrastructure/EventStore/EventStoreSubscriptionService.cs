@@ -2,9 +2,9 @@
 using System.Text.Json;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.EventHandlers;
-using ConsolidationService.Infrastructure.Logging;
 using ConsolidationService.Infrastructure.Messaging.Publishers;
 using EventStore.Client;
+using StreamTail.Logging;
 
 namespace ConsolidationService.Infrastructure.EventStore;
 

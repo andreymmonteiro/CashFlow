@@ -96,10 +96,10 @@ public sealed class CreatedConsolidationConsumer : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 
-    private async Task<ICommandHandler<CreateBalanceCommand, long>> GetCommandHandler()
+    private async Task<ICommandHandler<CreateBalanceCommand>> GetCommandHandler()
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         return scope.ServiceProvider
-            .GetRequiredService<ICommandHandler<CreateBalanceCommand, long>>();
+            .GetRequiredService<ICommandHandler<CreateBalanceCommand>>();
     }
 }

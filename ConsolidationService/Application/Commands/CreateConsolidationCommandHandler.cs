@@ -2,12 +2,11 @@
 using ConsolidationService.Domain.Aggregates;
 using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.EventStore;
-using ConsolidationService.Infrastructure.Logging;
 using ConsolidationService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
 using Polly;
-using RabbitMQ.Client;
+using StreamTail.Logging;
 
 namespace ConsolidationService.Application.Commands;
 
@@ -26,25 +25,21 @@ public class CreateConsolidationCommandHandler : ICommandHandler<CreateConsolida
 
     public async Task HandleAsync(CreateConsolidationCommand command, CancellationToken cancellationToken)
     {
-        var properties = new BasicProperties
-        {
-            Persistent = true
-        };
 
-        var consolidation = Consolidation.Create(command.AccountId, command.Amount, command.CreatedAt);
-
-        var accountId = command.AccountId.ToString();
-
-        var id = DeterministicId.For(accountId, consolidation.Date);
-
-        var eventId = Uuid.FromGuid(id);
-
-        var streamId = id.ToString();
+        _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
+            command.AccountId, command.Amount, command.CreatedAt);
 
         try
         {
-            _logger.LogInformation("Handling CreateConsolidationCommand for AccountId: {AccountId}, Amount: {Amount}, CreatedAt: {CreatedAt}",
-                command.AccountId, command.Amount, command.CreatedAt);
+            var consolidation = Consolidation.Create(command.AccountId, command.Amount, command.CreatedAt);
+
+            var accountId = command.AccountId.ToString();
+
+            var id = DeterministicId.For(accountId, consolidation.Date);
+
+            var eventId = Uuid.FromGuid(id);
+
+            var streamId = id.ToString();
 
             await InsertEventAsync(consolidation, streamId, eventId, cancellationToken);
         }

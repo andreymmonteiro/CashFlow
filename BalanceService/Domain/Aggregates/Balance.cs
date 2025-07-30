@@ -1,10 +1,10 @@
-﻿using BalanceService.Application.Commands;
-using BalanceService.Domain.Events;
+﻿using BalanceService.Domain.Events;
 using BalanceService.Domain.ValueObjects;
+using Domain.Shared;
 
 namespace BalanceService.Domain.Aggregates;
 
-public sealed class Balance
+public sealed class Balance : AggregateRoot
 {
     public Guid AccountId { get; }
 
@@ -13,12 +13,15 @@ public sealed class Balance
     private Balance(Guid accountId, decimal debit, decimal credit)
     {
         AccountId = accountId;
-        Amount = (debit, credit);
+        Amount = (debit, credit);        
     }
 
     public static Balance Create(Guid accountId, decimal debit, decimal credit)
-        => new(accountId, debit, credit);
+    {
+        var balance = new Balance(accountId, debit, credit);
 
-    public BalanceCreatedEvent ToCreatedEvent()
-        => new(AccountId.ToString(), Amount);
+        balance.AddDomainEvent(new BalanceCreatedEvent(balance.AccountId, balance.Amount));
+
+        return balance;
+    }
 }

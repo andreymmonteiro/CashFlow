@@ -9,7 +9,6 @@ using TransactionService.Domain.Events;
 using TransactionService.Infrastructure.DI;
 using TransactionService.Infrastructure.EventHandlers;
 using TransactionService.Infrastructure.EventStore;
-using TransactionService.Infrastructure.Logging;
 using TransactionService.Infrastructure.Messaging.Consumers;
 using TransactionService.Infrastructure.Messaging.Publishers;
 using TransactionService.Infrastructure.Options;
@@ -85,8 +84,6 @@ public class Program
         builder.Services.AddScoped<IEventHandler<TransactionCreatedEvent>, TransactionCreatedProjectionHandler>();
 
         builder.Services.AddScoped<IPublisherHandler<TransactionCreatedEvent>, TransactionCreatedPublisherHandler>();
-
-        builder.Services.AddScoped<IExceptionNotifier, ExceptionNotifier>();
 
         builder.Services.AddHostedService<EventStoreSubscriptionService>();
 

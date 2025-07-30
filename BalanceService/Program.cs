@@ -1,8 +1,13 @@
 using BalanceService.Application.Commands;
 using BalanceService.Application.Queries;
+using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.DI;
+using BalanceService.Infrastructure.EventHandlers;
+using BalanceService.Infrastructure.EventStore;
 using BalanceService.Infrastructure.Messaging.Consumers;
+using BalanceService.Infrastructure.Messaging.Publishers;
 using BalanceService.Infrastructure.Options;
+using BalanceService.Infrastructure.Repositories;
 using BalanceService.Presentation.Dtos.Request;
 using BalanceService.Presentation.Dtos.Response;
 using Microsoft.AspNetCore.Diagnostics;
@@ -40,9 +45,17 @@ public class Program
 
         builder.Services.AddHostedService<CreatedConsolidationConsumer>();
 
-        builder.Services.AddScoped<ICommandHandler<CreateBalanceCommand, long>, CreateBalanceCommandHandler>();
+        builder.Services.AddScoped<ICommandHandler<CreateBalanceCommand>, CreateBalanceCommandHandler>();
 
         builder.Services.AddScoped<IQueryHandler<BalanceRequest, BalanceResponse>, BalanceQueryHandler>();
+
+        builder.Services.AddScoped<IBalanceRepository, BalanceRepository>();
+
+        builder.Services.AddScoped<IEventHandler<BalanceCreatedEvent>, BalanceCreatedProjectionHandler>();
+
+        builder.Services.AddScoped<IPublisherHandler<BalanceCreatedEvent>, BalanceCreatedPublisherHandler>();
+
+        builder.Services.AddHostedService<EventStoreSubscriptionService>();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

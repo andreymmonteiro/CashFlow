@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using System.Text.Json;
+using BalanceService.Domain.Events;
+using BalanceService.Infrastructure.EventHandlers;
+using BalanceService.Infrastructure.Messaging.Publishers;
 using EventStore.Client;
 using StreamTail.Logging;
-using TransactionService.Domain.Events;
-using TransactionService.Infrastructure.EventHandlers;
-using TransactionService.Infrastructure.Messaging.Publishers;
 
-namespace TransactionService.Infrastructure.EventStore;
+namespace BalanceService.Infrastructure.EventStore;
 
 public class EventStoreSubscriptionService : BackgroundService
 {
@@ -40,17 +40,17 @@ public class EventStoreSubscriptionService : BackgroundService
 
                     switch (eventType)
                     {
-                        case nameof(TransactionCreatedEvent):
-                            var @event = JsonSerializer.Deserialize<TransactionCreatedEvent>(json);
+                        case nameof(BalanceCreatedEvent):
+                            var @event = JsonSerializer.Deserialize<BalanceCreatedEvent>(json);
 
                             // Call Projection Handler
                             var projectionHandler = scope.ServiceProvider
-                                .GetRequiredService<IEventHandler<TransactionCreatedEvent>>();
+                                .GetRequiredService<IEventHandler<BalanceCreatedEvent>>();
                             await projectionHandler.HandleAsync(@event, resolvedEvent.Event.EventStreamId, ct);
 
                             // Call Publisher Handler
                             var publisherHandler = scope.ServiceProvider
-                                .GetRequiredService<IPublisherHandler<TransactionCreatedEvent>>();
+                                .GetRequiredService<IPublisherHandler<BalanceCreatedEvent>>();
                             await publisherHandler.HandleAsync(@event, ct);
                             break;
                     }
@@ -63,7 +63,7 @@ public class EventStoreSubscriptionService : BackgroundService
 
                     var json = Encoding.UTF8.GetString(resolvedEvent.Event.Data.Span);
 
-                    await notifier.Notify(ex, "transaction-dlq", json, stoppingToken);
+                    await notifier.Notify(ex, "balance-dlq", json, stoppingToken);
                 }
             },
             cancellationToken: stoppingToken);

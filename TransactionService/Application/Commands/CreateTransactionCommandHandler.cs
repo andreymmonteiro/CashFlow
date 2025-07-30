@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using EventStore.Client;
+using StreamTail.Logging;
 using TransactionService.Domain.Aggregates;
 using TransactionService.Infrastructure.EventStore;
-using TransactionService.Infrastructure.Logging;
 using TransactionService.Infrastructure.Utilities;
 
 namespace TransactionService.Application.Commands;
@@ -29,21 +29,20 @@ public sealed class CreateTransactionCommandHandler : ICommandHandler<CreateTran
             command.AccountId,
             command.Amount);
 
-        var accountId = transaction.AccountId.ToString();
-
-        var id = DeterministicId.For(accountId, transaction.CreatedAt);
-
-        var streamId = id.ToString();
-
-        var eventId = Uuid.FromGuid(id);
-
-        var streamName = $"transaction-{streamId}";
-        var expectedVersion = StreamState.Any;
-
+        _logger.LogInformation("Handling CreateTransactionCommand for AccountId: {AccountId}, Amount: {Amount}, TransactionId: {TransactionId}",
+                            command.AccountId, command.Amount, transaction.TransactionId);
         try
         {
-            _logger.LogInformation("Handling CreateTransactionCommand for AccountId: {AccountId}, Amount: {Amount}, TransactionId: {TransactionId}",
-                                command.AccountId, command.Amount, transaction.TransactionId);
+            var accountId = transaction.AccountId.ToString();
+
+            var id = DeterministicId.For(accountId, transaction.CreatedAt);
+
+            var streamId = id.ToString();
+
+            var eventId = Uuid.FromGuid(id);
+
+            var streamName = $"transaction-{streamId}";
+            var expectedVersion = StreamState.Any;
 
             var eventDataBatch = transaction.DomainEvents.Select(s =>
                 new EventData(

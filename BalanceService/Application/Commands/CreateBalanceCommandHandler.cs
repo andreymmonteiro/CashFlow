@@ -2,161 +2,65 @@
 using BalanceService.Domain.Aggregates;
 using BalanceService.Domain.Events;
 using BalanceService.Infrastructure.EventStore;
-using BalanceService.Infrastructure.Projections;
 using BalanceService.Infrastructure.Utilities;
 using EventStore.Client;
 using Grpc.Core;
-using MongoDB.Driver;
 using Polly;
-using RabbitMQ.Client;
-using StreamTail.Channels;
+using StreamTail.Logging;
 
 namespace BalanceService.Application.Commands;
 
-public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand, long>
+public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand>
 {
     private readonly IEventStoreWrapper _eventStore;
-    private readonly IChannelPool _channelPool;
-    private readonly IMongoCollection<BalanceProjection> _balances;
+    private readonly IExceptionNotifier _exceptionNotifier;
     private readonly ILogger<CreateBalanceCommandHandler> _logger;
 
-    public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, IChannelPool channelPool, IMongoCollection<BalanceProjection> balances, ILogger<CreateBalanceCommandHandler> logger)
+    public CreateBalanceCommandHandler(IEventStoreWrapper eventStore, IExceptionNotifier exceptionNotifier, ILogger<CreateBalanceCommandHandler> logger)
     {
-        _channelPool = channelPool;
-        _logger = logger;
-        _balances = balances;
         _eventStore = eventStore;
+        _exceptionNotifier = exceptionNotifier;
+        _logger = logger;
     }
 
-    public async Task<long> HandleAsync(CreateBalanceCommand command, CancellationToken cancellationToken)
+    public async Task HandleAsync(CreateBalanceCommand command, CancellationToken cancellationToken)
     {
-        await using var lease = await _channelPool.RentAsync(cancellationToken);
-        var channel = lease.Channel;
-
-        var properties = new BasicProperties
-        {
-            Persistent = true
-        };
-
-        var accountId = command.AccountId.ToString();
-
-        var balance = Balance.Create(command.AccountId, command.Debit, command.Credit);
-
-        var @event = balance.ToCreatedEvent();
-
-        var date = command.Date;
-
-        var id = DeterministicId.For(command.AccountId.ToString(), date);
-
-        var eventId = Uuid.FromGuid(id);
-
-        var streamId = id.ToString();
+        _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Debit: {Amount}, Credit: {Credit}",
+                            command.AccountId, command.Debit, command.Credit);
 
         try
         {
-            _logger.LogInformation("Handling CreateBalanceCommand for AccountId: {AccountId}, Debit: {Amount}, Credit: {Credit}",
-                                command.AccountId, command.Debit, command.Credit);
+            var accountId = command.AccountId.ToString();
 
-            await InsertEventAsync(@event, streamId, eventId, cancellationToken);
+            var balance = Balance.Create(command.AccountId, command.Debit, command.Credit);
 
-            var modifiedCount = await UpsertProjectionAsync(balance, accountId, streamId, cancellationToken);
+            var date = command.Date;
 
-            var body = JsonSerializer.SerializeToUtf8Bytes(@event);
+            var id = DeterministicId.For(command.AccountId.ToString(), date);
 
-            await channel.BasicPublishAsync(
-                exchange: "",
-                routingKey: "balance-created",
-                mandatory: true,
-                basicProperties: properties,
-                body: body,
-                cancellationToken: cancellationToken);
+            var eventId = Uuid.FromGuid(id);
 
-            _logger.LogInformation("Published BalanceCreatedEvent to RabbitMQ");
+            var streamId = id.ToString();
 
-            return modifiedCount;
+            await InsertEventAsync(balance, streamId, eventId, cancellationToken);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error handling CreateBalanceCommand for AccountId: {AccountId}", command.AccountId);
 
-            // Send failed command to DLQ
-            var dlqBody = JsonSerializer.SerializeToUtf8Bytes(new
-            {
-                FailedAt = DateTime.UtcNow,
-                Command = command,
-                Reason = e.Message,
-                ConsolidationId = streamId
-            });
-
-            await channel.BasicPublishAsync(
-                exchange: "",
-                routingKey: "balance-dlq",
-                mandatory: true,
-                basicProperties: properties,
-                body: dlqBody,
-                cancellationToken: cancellationToken);
-
-            return 0;
+            await _exceptionNotifier.Notify(e, "balance-dlq", JsonSerializer.Serialize(command), cancellationToken);
         }
     }
 
-    private async Task<long> UpsertProjectionAsync(Balance balance, string accountId, string streamId, CancellationToken cancellationToken)
-    {
-        var filter = Builders<BalanceProjection>.Filter.And(
-            Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, accountId),
-            Builders<BalanceProjection>.Filter.Not(
-                Builders<BalanceProjection>.Filter.AnyEq(c => c.AppliedStreamIds, streamId))
-        );
-
-        var update = Builders<BalanceProjection>.Update
-             .SetOnInsert(c => c.AccountId, accountId)
-             .Inc(c => c.Amount, balance.Amount)
-             .Push(c => c.AppliedStreamIds, streamId);
-
-        var options = new UpdateOptions { IsUpsert = false };
-        var upsertResult = await _balances.UpdateOneAsync(filter, update, options, cancellationToken);
-
-        if (upsertResult.ModifiedCount == 0)
-        {
-            var documentFilter = Builders<BalanceProjection>.Filter.And(
-                Builders<BalanceProjection>.Filter.Eq(c => c.AccountId, accountId));
-
-            var count = await _balances.CountDocumentsAsync(documentFilter, cancellationToken: cancellationToken);
-
-            if (count > 0)
-            {
-                return 0;
-            }
-
-            var insertOptions = new InsertOneOptions()
-            {
-                BypassDocumentValidation = true
-            };
-
-            var projection = new BalanceProjection
-            {
-                AccountId = accountId,
-                Amount = balance.Amount,
-                AppliedStreamIds = new List<string> { streamId }
-            };
-
-            await _balances.InsertOneAsync(projection, insertOptions, cancellationToken);
-
-            return 1;
-        }
-
-        return upsertResult.ModifiedCount;
-    }
-
-    private async Task InsertEventAsync(BalanceCreatedEvent @event, string balanceId, Uuid eventId, CancellationToken cancellationToken)
+    private async Task InsertEventAsync(Balance balance, string balanceId, Uuid eventId, CancellationToken cancellationToken)
     {
         var streamName = $"balance-{balanceId}";
         var expectedVersion = StreamState.Any;
 
-        var eventData = new EventData(
+        var eventDataBatch = balance.DomainEvents.Select(s => new EventData(
             eventId,
             nameof(BalanceCreatedEvent),
-            JsonSerializer.SerializeToUtf8Bytes(@event));
+            JsonSerializer.SerializeToUtf8Bytes(s, s.GetType())));
 
         await Policy
             .Handle<RpcException>(ex =>
@@ -174,7 +78,7 @@ public class CreateBalanceCommandHandler : ICommandHandler<CreateBalanceCommand,
                 await _eventStore.AppendToStreamAsync(
                     streamName,
                     expectedVersion,
-                    new[] { eventData },
+                    eventDataBatch,
                     cancellationToken: cancellationToken);
             });
     }

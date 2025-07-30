@@ -1,3 +1,8 @@
-﻿namespace BalanceService.Domain.Events;
+﻿using Domain.Shared;
 
-public record BalanceCreatedEvent(string AccountId, decimal Amount);
+namespace BalanceService.Domain.Events;
+
+public record BalanceCreatedEvent(Guid AccountId, decimal Amount) : IDomainEvent
+{
+    public DateTime OccurredOn => DateTime.UtcNow;
+}

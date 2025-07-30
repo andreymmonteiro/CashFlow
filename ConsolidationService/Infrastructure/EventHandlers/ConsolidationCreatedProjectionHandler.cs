@@ -31,6 +31,6 @@ public sealed class ConsolidationCreatedProjectionHandler : IEventHandler<Consol
 
         await _consolidationRepository.SaveAsync(projection, streamId, cancellationToken);
 
-        _logger.LogInformation("MongoDB upsert result");
+        _logger.LogInformation("MongoDB upsert performed");
     }
 }

@@ -4,7 +4,6 @@ using ConsolidationService.Domain.Events;
 using ConsolidationService.Infrastructure.DI;
 using ConsolidationService.Infrastructure.EventHandlers;
 using ConsolidationService.Infrastructure.EventStore;
-using ConsolidationService.Infrastructure.Logging;
 using ConsolidationService.Infrastructure.Messaging.Consumers;
 using ConsolidationService.Infrastructure.Messaging.Publishers;
 using ConsolidationService.Infrastructure.Options;
@@ -49,8 +48,6 @@ public class Program
         builder.Services.AddScoped<IEventHandler<ConsolidationCreatedEvent>, ConsolidationCreatedProjectionHandler>();
 
         builder.Services.AddScoped<IPublisherHandler<ConsolidationCreatedEvent>, ConsolidationCreatedPublisherHandler>();
-
-        builder.Services.AddScoped<IExceptionNotifier, ExceptionNotifier>();
 
         builder.Services.AddScoped<IConsolidationRepository, ConsolidationRepository>();
 
