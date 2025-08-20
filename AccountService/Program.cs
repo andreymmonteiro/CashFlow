@@ -30,8 +30,23 @@ builder.Services.AddScoped(sp =>
     return db.GetCollection<UserProjection>(mongoDbOptions.CollectionName);
 });
 
+var allowedOrigin = "http://localhost:3000";
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins(allowedOrigin) // Only allow this URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 
 var app = builder.Build();
+
+app.UseCors("AllowSpecificOrigin");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
